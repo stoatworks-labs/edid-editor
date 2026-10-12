@@ -1,9 +1,10 @@
 # Otter EDID Editor user guide
 
-**A browser EDID editor for event video.** Build an EDID from a resolution and a refresh rate, or
-edit every field by hand — then see **which processors will actually take it, and in which mode.**
+Otter EDID Editor is a browser EDID editor for event video. Build an EDID from a resolution and a
+refresh rate, or edit every field by hand, then see which processors will actually take it, and in
+which mode.
 
-Nothing is uploaded. There is no backend to upload it to.
+Nothing's uploaded. There's no backend to upload it to.
 
 ![The editor with the mode cost and the hardware verdicts](screenshots/otter-edid-editor.png)
 
@@ -26,21 +27,21 @@ where every input menu will read it, and a CTA-861 extension carrying the VIC wh
 one.
 
 **Advanced.** Every field. Identity, video input definition, chromaticity, established and standard
-timings, all four descriptors, the CTA-861 extension — video and audio descriptors, HDMI and HDMI
-Forum vendor blocks, HDR static metadata, colorimetry, 4:2:0 maps — and a DisplayID 2.0 extension.
+timings, all four descriptors, the CTA-861 extension (video and audio descriptors, HDMI and HDMI
+Forum vendor blocks, HDR static metadata, colorimetry, 4:2:0 maps) and a DisplayID 2.0 extension.
 
 **Mosaic.** For frame-synced output from a Mac across several plugs. Give the whole canvas, the
-grid — **2 × 1** or **2 × 2** — and the rate. You get **one EDID per plug**: load `left.bin` on the
+grid (**2 × 1** or **2 × 2**) and the rate. You get **one EDID per plug**: load `left.bin` on the
 input the Mac's left-hand output feeds and `right.bin` on the other (for 2 × 2, `tile_r1_c1.bin` is
 the top left). Each carries a DisplayID Tiled Display Topology block. A Mac that finds matching
-blocks on its outputs joins them into **one display**, drives them together, and the seams do not
-tear. If the Mac lists the plugs as separate displays, they have not bonded and are not in sync.
+blocks on its outputs joins them into **one display**, drives them together, and the seams don't
+tear. If the Mac lists the plugs as separate displays, they haven't bonded and aren't in sync.
 
 - Up to **6144 wide** bonds on any recent macOS; up to **12288** needs **macOS 27**.
 - Each plug is at most 6144 wide. Three or four across never bonds on a Mac.
-- A second mosaic on the same Mac needs a different **mosaic number** — the Mac groups plugs by it.
+- A second mosaic on the same Mac needs a different **mosaic number**, because the Mac groups plugs by it.
 
-The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. Otter has not
+The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. Otter hasn't
 loaded its own files into a Mac.
 
 All three modes name the EDID, and all three show the same two answers on the right.
@@ -50,20 +51,20 @@ All three modes name the EDID, and all three show the same two answers on the ri
 ## The two answers
 
 **What the mode costs, and the smallest interface that carries it.** Pixel clock, raster, line
-rate, payload — then the minimum HDMI version (1.0–1.2, 1.3/1.4, 2.0, or which FRL rate), the
+rate and payload, then the minimum HDMI version (1.0–1.2, 1.3/1.4, 2.0, or which FRL rate), the
 minimum DisplayPort rate at 4 and 2 lanes, and whether DVI needs one link or two.
 
 **Which hardware takes it.** Twenty-one models across the major event-video vendors, each answering
-**yes / conditional / no** — and **where the answer is conditional, the capacity mode you have to
+**yes / conditional / no**, and **where the answer is conditional, the capacity mode you have to
 configure to get it**:
 
 - A **LiveCore dual-link input costs you the neighbouring input.**
 - A **Barco E2 Gen 1** does 4K60 only across two cables.
 - A **Barco E2 Gen 2 quad card** is four WQXGA inputs **or** two UHD60 ones.
-- An **Aquilon DisplayPort card** is four DP 1.2 ports **or** two DP 1.4 ports — and **DP 1.4
+- An **Aquilon DisplayPort card** is four DP 1.2 ports **or** two DP 1.4 ports, and **DP 1.4
   preempts ports 2 and 4.**
 
-Every device carries its sources, quoted, with the date they were read. That is what to check
+Every device carries its sources, quoted, with the date they were read. That's what to check
 before a purchase decision rests on a row.
 
 ---
@@ -71,20 +72,20 @@ before a purchase decision rests on a row.
 ## DSC and variable refresh
 
 Both are toggles, and **both are real**: they change the bandwidth arithmetic, they change which
-interface version is required, and they are written into the EDID.
+interface version is required, and they're written into the EDID.
 
 **Turning DSC on correctly makes every HDMI 2.0 and earlier input say no**, because DSC travels
-only over a fixed-rate link. That is not the tool being pessimistic — it is the constraint.
+only over a fixed-rate link. That's just how DSC works.
 
 ---
 
 ## Import
 
-Open a `.bin`, or paste a hex dump from anywhere — `xrandr`, `edid-decode`, `xxd`, a C header, a
+Open a `.bin`, or paste a hex dump from anywhere: `xrandr`, `edid-decode`, `xxd`, a C header, a
 bare hex string.
 
-**A bad checksum is reported, not refused.** The dump off a misbehaving device is exactly when you
-need to look at it, and a tool that refuses to open it is useless at the only moment it matters.
+**A bad checksum is reported, not refused.** The dump off a misbehaving device is the one you most
+need to look at, and a tool that won't open it is no use at the one moment it matters.
 
 ---
 
