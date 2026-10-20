@@ -142,7 +142,8 @@ source says it learned on the bench, and what this mode repeats:
 - **macOS limits:** a bonded canvas is up to 6144 wide on macOS 26, up to 12288 on 27
   (12288 is also the E3's DisplayID ceiling, so 27's real limit is unknown). Only
   2 x 1 and 2 x 2 bond; 3- and 4-wide never. 2 x 2 fed by an **Encore 3 on 10.3**
-  drops connector hotplug (Barco "Defect 1").
+  drops connector hotplug (Barco "Defect 1"). *Re-read against field reports on
+  2026-10-20, below: 6144 is the 50/60 Hz figure, not a hard cap.*
 - **The macOS 27 release notes say nothing about any of this.** The only related entry
   is a fix for two identical displays (same model and serial) where the second stayed
   dark. Apple's release-notes pages are JS-rendered; `developer.apple.com/tutorials/data/
@@ -169,3 +170,34 @@ Still lossy on purpose: **editing** a block re-encodes it from the model, so byt
 model does not carry (HDMI VSDB latency fields, reserved bits) go with that edit.
 Also seen: the reference's base block claims two extensions (byte 126) for a 256-byte
 blob, because mosaic appends the third; the encoder writes the count it has.
+
+**Mosaic widths re-read against field reports, 2026-10-20.** Someone asked through the
+feedback button whether an M5 could do 2 × 8192 × 2160 (stoatworks-triage#6), and Otter
+refused any tile over 6144. The research turned up more than the reference had:
+
+- **6144 is the 50/60 Hz figure before macOS 27.** BetterDisplay discussion #713 has
+  7680 × 4320 @30 (two 3840 × 4320 tiles) bonding on an M2 Max (2023-10) and an M4 Max
+  (2025-08), while 2 × 3840 × 2160 @60 did not; PixelHue's Mac Mosaic notes say 7680
+  works "on M2 and above". The chip list is inferred from who reported it. Monterey
+  bonded 7680 × 2304 @60 on an M1 Max and Ventura cut it to 6144.
+- **12288 on macOS 27 was the Barco E3's ceiling, not macOS's.** Nobody has reported a
+  bonded canvas wider than that, or a bonded tile wider than 6144, on any Mac.
+- **Inferred, from third-party reads of M4 and M5 display firmware** (smcleod.net,
+  BetterDisplay #2174): one display pipe is at most 7680 wide (`MaxSrcRectWidthForPipe`)
+  and the source buffer 16384. An 8192 tile would need two pipes joined, as 8K does.
+- So `mosaicErrors` no longer refuses a wide tile. `checkMosaic` warns ("Nobody has
+  shown a Mac bonding tiles 8192 wide") and a canvas past 12288 is a caveat, not a "no".
+- **New: a tile-clock warning.** The copied range-limits descriptor (`fd 00 17 f0 0f ff
+  3c`) says 600 MHz at most, and Otter had been building 12288 × 2160 @60 (840.45 MHz a
+  tile) and 2 × 8192 × 2160 @60 (1113.49) without a word. It warns past 600 now. The
+  descriptor stays byte-identical, and the reference fixtures still pin it.
+  2 × 8192 × 2160 @30 is 548.98 MHz, under the line.
+- **Not checked:** the same descriptor's 255 kHz line-rate ceiling, which a 2160-tall
+  tile passes at about 115 Hz.
+- **Found, not fixed:** a 2 × 1 with tiles taller than 4095 (7680 × 4320 as 2 × 1, the
+  layout in the 30 Hz reports) writes the base block's stand-in DTD with its 12-bit
+  height wrapped, so it decodes as 3840 × 224. The stand-in is only ever halved for
+  width. The DisplayID Type I timing, which is what a Mac bonds on, is right.
+
+LivePremier Plus vendors the embed build, so a change here goes there too: `npm run
+build:embed`, commit `dist-embed/`, then its `npm run sync:otter-edid`.

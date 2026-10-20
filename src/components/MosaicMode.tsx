@@ -204,8 +204,9 @@ export function MosaicChecks({ checks }: { checks: MosaicCheck[] }) {
         </div>
       ))}
       <div className="note">
-        From bench testing of the reference files on macOS 26 and 27, and BetterDisplay users’ field reports. The DisplayID
-        block layout is checked against the Linux kernel’s parser.
+        From bench testing of the reference files on macOS 26 and 27, BetterDisplay users’ field reports and PixelHue’s
+        notes. The widths are the widest anyone has reported, not limits anyone has found, and which chips manage them is
+        inferred from who reported it. The DisplayID block layout is checked against the Linux kernel’s parser.
       </div>
     </Panel>
   )

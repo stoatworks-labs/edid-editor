@@ -102,7 +102,7 @@ src/components/    UI only. No arithmetic lives here.
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 120 tests.
+  fixture tile) saves back byte for byte when not edited. 122 tests.
 
 **Assumed, and NOT verified:**
 
@@ -110,8 +110,14 @@ src/components/    UI only. No arithmetic lives here.
   bytes are well-formed and self-consistent; whether a given box likes them is
   untested. Mosaic mode is second-hand evidence only: identical bytes bonded on
   macOS 26 and 27 in the reference's testing, per its source comments (with a
-  different topology id — Otter's is SWK/0x4F54). The macOS limits (6144 any
-  version, 12288 on 27, only 2 x 1 and 2 x 2) are those findings, not ours.
+  different topology id — Otter's is SWK/0x4F54). The macOS widths are the
+  widest reported, not limits found, and none of them is ours: 6144 at 50/60 Hz
+  before macOS 27 (the reference on 26, BetterDisplay users since Ventura);
+  7680 at 30 Hz on M2 to M4 Max (BetterDisplay users, PixelHue; the chip list
+  is inferred from who reported it); 12288 on 27, where the Barco E3 stopped,
+  not macOS. Only 2 x 1 and 2 x 2 bond. Nobody has shown a tile wider than 6144
+  bonding, so one builds with a warning, not an error. Whether a Mac minds a
+  tile clocked past the 600 MHz in the copied range limits is untested.
 - **CVT-RB v2 parameters** (80-px blanking, 8-line vsync, 1 kHz clock step) are
   from the CVT 1.2 description, not checked against a reference implementation
   the way v1 was. The relative ordering (v2 < v1 < standard) is tested; the
@@ -142,6 +148,11 @@ npm run build
 
 The dev server is registered in `~/.claude/launch.json` as `otter-edid-editor`
 on port 5199.
+
+LivePremier Plus vendors the editor from `dist-embed/otter-edid-embed.js`, which
+is committed here. After a change under `src/`, run `npm run build:embed` and
+commit `dist-embed/` with it, then `npm run sync:otter-edid -- <this checkout>`
+in livepremier-plus.
 
 ## Notes
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import fx from './fixtures/reference-tiles.json'
-import { buildMosaic, checkMosaic, DEFAULT_MOSAIC, mosaicErrors, tileLabel } from '../mosaic.ts'
+import { buildMosaic, checkMosaic, DEFAULT_MOSAIC, mosaicErrors, RANGE_LIMIT_MAX_MHZ, tileLabel } from '../mosaic.ts'
 import type { MosaicRequest } from '../mosaic.ts'
 import { decodeEdid } from '../edid/decode.ts'
 import { encodeDisplayId, encodeTiledTopology, decodeTiledTopology } from '../edid/displayid.ts'
@@ -126,11 +126,64 @@ describe('what a Mac will make of it', () => {
   const level = (req: Partial<MosaicRequest>, what: RegExp) =>
     checkMosaic({ ...DEFAULT_MOSAIC, ...req }).find((c) => what.test(c.what))?.level
 
-  it('bands the width: any macOS, macOS 27, untested', () => {
+  const find = (req: Partial<MosaicRequest>, what: RegExp) =>
+    checkMosaic({ ...DEFAULT_MOSAIC, ...req }).find((c) => what.test(c.what))
+
+  it('bands the width: any macOS, 30 Hz on M2 to M4 Max, macOS 27, never shown', () => {
     expect(level({ width: 6144 }, /wide/)).toBe('ok')
-    expect(level({ width: 7680 }, /wide/)).toBe('warn')
+    expect(level({ width: 7680, refreshHz: 30 }, /wide/)).toBe('warn')
+    expect(find({ width: 7680, refreshHz: 30 }, /wide/)!.what).toMatch(/30 Hz .* M2 to M4 Max/)
+    expect(find({ width: 7680, refreshHz: 30 }, /wide/)!.detail).toMatch(/inferred/)
+    expect(find({ width: 7680, refreshHz: 60 }, /wide/)!.what).toMatch(/needs macOS 27/)
+    expect(find({ width: 12288, refreshHz: 30 }, /wide/)!.what).toMatch(/needs macOS 27/)
     expect(level({ width: 12288 }, /wide/)).toBe('warn')
-    expect(level({ width: 12800 }, /wide/)).toBe('bad')
+    // 12288 was the Barco E3's ceiling in the reference's test, not macOS's, so
+    // wider is unknown rather than refused.
+    expect(level({ width: 12800 }, /wide/)).toBe('warn')
+    expect(find({ width: 12800 }, /wide/)!.detail).toMatch(/E3 .* not macOS/)
+  })
+
+  it('builds a tile wider than 6144, and warns that nobody has shown one bonding', () => {
+    const req = { ...DEFAULT_MOSAIC, width: 16384, height: 2160, refreshHz: 30 }
+    expect(mosaicErrors(req)).toEqual([])
+    const r = buildMosaic(req)
+    expect(r.tileWidth).toBe(8192)
+    for (const t of r.tiles) {
+      const d = decodeEdid(t.bytes)
+      expect(d.issues.filter((i) => i.severity === 'error')).toEqual([])
+      expect((d.edid.extensions.find((e) => e.kind === 'displayid') as DisplayIdExtension).tiled!.tileWidth).toBe(8192)
+    }
+    expect(primaryTiming(decodeEdid(r.tiles[0].bytes).edid)!.hActive).toBe(8192)
+
+    const wide = find(req, /Nobody has shown a Mac bonding/)!
+    expect(wide.level).toBe('warn')
+    expect(wide.what).toMatch(/tiles 8192 wide/)
+    expect(wide.detail).toMatch(/Inferred .* 7680/)
+    // Past 6144 but inside one pipe: the warning, without the pipe inference.
+    expect(find({ width: 12800 }, /Nobody has shown/)!.detail).not.toMatch(/pipe/)
+    expect(find({ width: 12288 }, /Nobody has shown/)).toBeUndefined()
+    // Nothing reads "no" for a wide set that is otherwise a 2 x 1.
+    expect(checkMosaic(req).filter((c) => c.level === 'bad')).toEqual([])
+  })
+
+  it('warns when a tile’s clock is past the 600 MHz the copied range limits allow', () => {
+    // The limit is the reference's own descriptor, read back from a built tile.
+    const range = decodeEdid(buildMosaic(DEFAULT_MOSAIC).tiles[0].bytes).edid.descriptors.find((d) => d.kind === 'range')
+    expect(range && range.kind === 'range' && range.maxPixelClockMHz).toBe(RANGE_LIMIT_MAX_MHZ)
+    expect(RANGE_LIMIT_MAX_MHZ).toBe(600)
+
+    const clock = (req: Partial<MosaicRequest>) => find(req, /MHz per plug/)
+    expect(clock({ width: 12288, height: 2160, refreshHz: 60 })!.what).toMatch(/^840\.45 MHz per plug/)
+    expect(clock({ width: 16384, height: 2160, refreshHz: 60 })!.what).toMatch(/^1113\.49 MHz per plug/)
+    expect(clock({ width: 16384, height: 2160, refreshHz: 60 })!.level).toBe('warn')
+    // 2 x 8192 at 30 Hz is 548.98 MHz a tile, and the default 430.89: no warning.
+    expect(clock({ width: 16384, height: 2160, refreshHz: 30 })).toBeUndefined()
+    expect(clock({})).toBeUndefined()
+    // Nor for any of the reference's own cases (431-533 MHz).
+    for (const c of fx.cases) {
+      const inp = c.input
+      expect(clock({ width: inp.width, height: inp.height, cols: inp.cols, rows: inp.rows, refreshHz: inp.hz })).toBeUndefined()
+    }
   })
 
   it('only 2 x 1 and 2 x 2 bond', () => {
@@ -140,8 +193,8 @@ describe('what a Mac will make of it', () => {
     expect(level({ cols: 1, rows: 2 }, /bond/)).toBe('bad')
   })
 
-  it('refuses a tile wider than 6144, an odd split, a bad vendor id', () => {
-    expect(mosaicErrors({ ...DEFAULT_MOSAIC, width: 12800 })).toContainEqual(expect.stringMatching(/6400 wide/))
+  it('refuses an odd split and a bad vendor id, but not a wide tile', () => {
+    expect(mosaicErrors({ ...DEFAULT_MOSAIC, width: 12800 })).toEqual([])
     expect(mosaicErrors({ ...DEFAULT_MOSAIC, width: 6152, cols: 2 })).toEqual([])
     expect(mosaicErrors({ ...DEFAULT_MOSAIC, height: 2161, rows: 2 })).toContainEqual(expect.stringMatching(/2161/))
     expect(mosaicErrors({ ...DEFAULT_MOSAIC, vendor: 'at' })).toContainEqual(expect.stringMatching(/vendor/))

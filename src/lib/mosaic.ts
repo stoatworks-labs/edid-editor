@@ -40,10 +40,34 @@ const REFERENCE_B64 =
 let reference: Uint8Array | null = null
 const ref = () => (reference ??= Uint8Array.from(atob(REFERENCE_B64), (c) => c.charCodeAt(0)))
 
-/** What bench testing of the reference files established. Not Otter's own tests. */
+/**
+ * The widest anyone has reported bonding, from the reference's bench testing
+ * and other people's field reports (read 2026-10-20). Not Otter's own tests,
+ * and on macOS 27 nobody has found the edge yet.
+ *
+ *   6144   the widest canvas reported at 50 or 60 Hz before macOS 27: the
+ *          reference on macOS 26, BetterDisplay users since Ventura.
+ *   7680   at 30 Hz, before macOS 27: two 3840 x 4320 tiles, reported on M2
+ *          Max and M4 Max (BetterDisplay #713) and by PixelHue ("M2 and
+ *          above"). That it takes one of those chips is inferred from who
+ *          reported it.
+ *   12288  on macOS 27, two 6144 tiles, in the reference's testing. That was
+ *          the Barco E3's DisplayID ceiling, not macOS's; nobody has tried
+ *          wider.
+ *   6144   is also the widest TILE reported bonding. Wider builds, with a
+ *          warning, so someone can try it.
+ */
 export const MAC_ANY_VERSION_MAX_WIDTH = 6144
+export const MAC_30HZ_MAX_WIDTH = 7680
 export const MAC_27_MAX_WIDTH = 12288
 export const MAX_TILE_WIDTH = 6144
+/** Inferred from third-party reads of M4 and M5 display firmware
+ *  (MaxSrcRectWidthForPipe): one display pipe scans out at most 7680 wide. */
+export const PIPE_MAX_WIDTH = 7680
+/** The copied range-limits descriptor (base block, bytes 72-89) allows 600
+ *  MHz at most: byte 81 is 0x3c, in 10 MHz steps. A test pins this to the
+ *  bytes. The descriptor itself is never edited. */
+export const RANGE_LIMIT_MAX_MHZ = 600
 
 export const MOSAIC_GRIDS = [
   { cols: 2, rows: 1, label: '2 × 1 — side by side' },
@@ -230,8 +254,8 @@ export function mosaicErrors(r: MosaicRequest): string[] {
   if (r.width % r.cols) out.push(`${r.width} does not divide into ${r.cols} equal columns.`)
   if (r.height % r.rows) out.push(`${r.height} does not divide into ${r.rows} equal rows.`)
   if (r.width % 8) out.push(`The canvas width must be a multiple of 8 — ${r.width} is not.`)
-  const tileW = r.width / r.cols
-  if (tileW > MAX_TILE_WIDTH) out.push(`Each tile would be ${tileW} wide. ${MAX_TILE_WIDTH} is the widest tile a Mac composes.`)
+  // A tile wider than MAX_TILE_WIDTH is checkMosaic's warning, not an error:
+  // nobody has shown one bonding, and nobody has shown one failing either.
   if (r.cols > 16 || r.rows > 16) out.push('More than 16 tiles on an axis needs the high location bits, which this layout leaves at zero.')
   if (!/^[A-Z]{3}$/.test(r.vendor)) out.push('The vendor id is three capital letters, A-Z.')
   if (!(r.product >= 0 && r.product <= 0xffff)) out.push('The product code is 0-65535.')
@@ -321,7 +345,8 @@ export interface MosaicCheck {
 
 /**
  * What a Mac will do with the set, per bench results with the reference files on macOS 26
- * and 27 and the BetterDisplay field reports. Advice, not a build error.
+ * and 27, the BetterDisplay field reports and PixelHue's notes. Advice, not a build error.
+ * Which chips manage what is inferred from who reported it.
  */
 export function checkMosaic(r: MosaicRequest): MosaicCheck[] {
   const out: MosaicCheck[] = []
@@ -344,15 +369,54 @@ export function checkMosaic(r: MosaicRequest): MosaicCheck[] {
   }
 
   if (r.width <= MAC_ANY_VERSION_MAX_WIDTH) {
-    out.push({ level: 'ok', what: `${r.width} wide works on any recent macOS`, detail: 'Bonded canvases up to 6144 wide were verified on macOS 26 and 27.' })
+    out.push({
+      level: 'ok',
+      what: `${r.width} wide works on any recent macOS`,
+      detail: `${MAC_ANY_VERSION_MAX_WIDTH} is the widest bonded canvas reported at 50 or 60 Hz before macOS 27: the reference files on macOS 26, and BetterDisplay users since Ventura.`,
+    })
+  } else if (r.width <= MAC_30HZ_MAX_WIDTH && r.refreshHz <= 30) {
+    out.push({
+      level: 'warn',
+      what: `Up to ${MAC_30HZ_MAX_WIDTH} wide at 30 Hz has bonded on M2 to M4 Max`,
+      detail: `Before macOS 27, BetterDisplay users report ${MAC_30HZ_MAX_WIDTH} wide bonding at 30 Hz on M2 Max and M4 Max, and PixelHue say M2 and above. Which chips manage it is inferred from who reported it. At 50 or 60 Hz nothing wider than ${MAC_ANY_VERSION_MAX_WIDTH} has bonded before 27.`,
+    })
   } else if (r.width <= MAC_27_MAX_WIDTH) {
-    out.push({ level: 'warn', what: `${r.width} wide needs macOS 27`, detail: 'macOS 26 composes a bonded display only up to 6144 wide.' })
+    out.push({
+      level: 'warn',
+      what: `${r.width} wide needs macOS 27`,
+      detail: `Before 27 the widest bonded canvas reported is ${MAC_ANY_VERSION_MAX_WIDTH} at 50 or 60 Hz, or ${MAC_30HZ_MAX_WIDTH} at 30 Hz. On macOS 27 the reference files bonded two ${MAX_TILE_WIDTH} tiles, ${MAC_27_MAX_WIDTH} wide.`,
+    })
   } else {
     out.push({
-      level: 'bad',
-      what: `${r.width} wide has never been tested`,
-      detail: `${MAC_27_MAX_WIDTH} is the widest bonded canvas anyone has shown working, on macOS 27. Split it across two Macs.`,
+      level: 'warn',
+      what: `${r.width} wide has never been shown bonding`,
+      detail: `${MAC_27_MAX_WIDTH} is the widest bonded canvas anyone has reported, on macOS 27, and it stopped there because the Barco E3 in that test did, not macOS. Nobody has tried wider, so nobody knows. If it has to work on the night, split it across two Macs.`,
     })
+  }
+
+  const tileW = r.width / r.cols
+  if (tileW > MAX_TILE_WIDTH) {
+    out.push({
+      level: 'warn',
+      what: `Nobody has shown a Mac bonding tiles ${tileW} wide`,
+      detail:
+        `${MAX_TILE_WIDTH} is the widest tile reported bonding: two of them, ${MAC_27_MAX_WIDTH} wide, on macOS 27. This builds so you can try it, and I’d like to hear how it goes.` +
+        (tileW > PIPE_MAX_WIDTH
+          ? ` Inferred from third-party reads of M4 and M5 display firmware: one display pipe scans out at most ${PIPE_MAX_WIDTH} wide, so a tile this wide would need two pipes joined, the way a Mac drives 8K.`
+          : ''),
+    })
+  }
+
+  if (r.width > 0 && r.height > 0 && r.refreshHz > 0 && r.cols >= 1 && r.rows >= 1) {
+    // The clock the tile's EDID states, rounded to 10 kHz like the Type I timing.
+    const mhz = toTiming(mosaicTiming(tileW, r.height / r.rows, r.refreshHz)).pixelClockHz / 1e6
+    if (mhz > RANGE_LIMIT_MAX_MHZ) {
+      out.push({
+        level: 'warn',
+        what: `${mhz.toFixed(2)} MHz per plug is past the ${RANGE_LIMIT_MAX_MHZ} MHz its EDID allows`,
+        detail: `The base block is a real display’s EDID, copied byte for byte, and its range-limits descriptor says ${RANGE_LIMIT_MAX_MHZ} MHz at most. This tile mode needs more, so each file contradicts itself. Whether a Mac minds is untested. A lower rate brings it down.`,
+      })
+    }
   }
 
   out.push({

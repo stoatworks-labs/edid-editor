@@ -4,7 +4,9 @@
 > against the Linux kernel's own parser. **No EDID this tool produced has ever been loaded into a
 > display, a source or a processor**, and the twenty-one-model compatibility table is vendor
 > paperwork, cited per claim but never tried against the hardware it describes. Mosaic mode
-> reproduces another tool's Mac-tested files byte for byte, but Otter hasn't tested them itself. See
+> reproduces another tool's Mac-tested files byte for byte, but Otter hasn't tested them itself.
+> Its macOS widths are the widest other people have reported, and **nobody has shown a Mac bonding
+> a tile wider than 6144**, though Otter will build one. See
 > [What is verified, and what is not](#what-is-verified-and-what-is-not).
 
 # Otter EDID Editor
@@ -38,9 +40,18 @@ multi-output from a Mac. You give the whole canvas, the grid (2 × 1 or 2 × 2) 
 the rate; you get one EDID per plug, each carrying a DisplayID Tiled Display
 Topology block. A Mac that reads matching blocks on several connectors joins them
 into one display and drives them as one, so the seams can't tear. Download them
-one by one or as a zip. Alongside that you get what macOS will make of the canvas (up to 6144
-wide on any recent macOS, up to 12288 on macOS 27, only 2 × 1 and 2 × 2 bond), and
+one by one or as a zip. Alongside that you get what macOS will make of the canvas, and
 the cost and hardware table for the per-plug mode.
+
+The widths it quotes are the widest anyone has reported bonding, which isn't the same as a
+limit anyone has found. Before macOS 27 that's 6144 wide at 50 or 60 Hz, and 7680 at 30 Hz on
+M2 to M4 Max (which chips manage it is inferred from who reported it). On macOS 27 the
+reference files bonded two 6144 tiles, 12288 wide, and stopped there because the Barco E3 in
+the test did, not macOS. Only 2 × 1 and 2 × 2 bond. Otter builds a tile wider than 6144 with a
+warning rather than refusing it, since nobody has shown a Mac bonding one and somebody ought to
+try. It also warns when a plug's clock goes past the 600 MHz that the copied range-limits
+descriptor allows: 12288 × 2160 at 60 needs 840 MHz a plug, and nobody knows yet whether a Mac
+minds.
 
 The mosaic layout isn't Otter's invention. It reproduces, byte for byte, a
 reference builder whose files have bonded on macOS 26 and 27. Its base and CTA
@@ -104,8 +115,9 @@ been tried against any hardware. See `AGENTS.md` for the full breakdown.
 
 Mosaic mode is the one exception to "never on hardware", and only at second hand:
 its layout is byte-identical to reference files reported bonding on macOS 26 and
-27. Otter hasn't loaded its own files into a Mac, and the macOS limits it quotes
-come from that testing, not mine.
+27. Otter hasn't loaded its own files into a Mac. The macOS widths it quotes come
+from that testing and from other people's field reports (BetterDisplay users,
+PixelHue), not mine, and anything in them about particular chips is inferred.
 
 Not affiliated with Analog Way, Barco, PixelHue, Brompton, NovaStar, disguise or
 Green Hippo. Product names appear only to state compatibility.

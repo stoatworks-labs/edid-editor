@@ -15,6 +15,9 @@ Nothing's uploaded. There's no backend to upload it to.
 > hardware.** **No hardware has ever been fed an EDID this tool produced.** Treat a verdict as a
 > shortlist.
 >
+> Mosaic mode's macOS widths are the widest other people have reported, not limits anyone has
+> found. **Nobody has shown a Mac bonding a plug wider than 6144**, though Otter will build one.
+>
 > Built with AI assistance, directed and reviewed by a human author.
 
 ---
@@ -37,8 +40,15 @@ the top left). Each carries a DisplayID Tiled Display Topology block. A Mac that
 blocks on its outputs joins them into **one display**, drives them together, and the seams don't
 tear. If the Mac lists the plugs as separate displays, they haven't bonded and aren't in sync.
 
-- Up to **6144 wide** bonds on any recent macOS; up to **12288** needs **macOS 27**.
-- Each plug is at most 6144 wide. Three or four across never bonds on a Mac.
+- Up to **6144 wide** at 50 or 60 Hz bonds on any recent macOS. Before macOS 27, **7680** has been
+  reported at **30 Hz** on M2 to M4 Max (which chips manage it is inferred from who reported it).
+- On **macOS 27** the reference files bonded two 6144 plugs, **12288** wide. That was the Barco E3's
+  ceiling in the test, not macOS's, so nobody knows yet how far 27 goes.
+- **6144** is the widest plug anyone has shown bonding. Otter builds wider ones with a warning, so
+  you can try a 2 × 8192, but don't promise it to anyone until you have. Three or four across never
+  bonds on a Mac.
+- Otter warns when a plug's pixel clock goes past **600 MHz**, the most the copied range-limits
+  descriptor allows (12288 × 2160 at 60 needs 840 MHz a plug). Whether a Mac minds is untested.
 - A second mosaic on the same Mac needs a different **mosaic number**, because the Mac groups plugs by it.
 
 The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. Otter hasn't
