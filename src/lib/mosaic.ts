@@ -1,4 +1,5 @@
 import type { Timing } from './timing/types.ts'
+import { hFreq } from './timing/types.ts'
 import { checksum } from './edid/encode.ts'
 import { encodeTiledTopology, encodeType1Timing } from './edid/displayid.ts'
 
@@ -25,9 +26,9 @@ import { encodeTiledTopology, encodeType1Timing } from './edid/displayid.ts'
  * which is why a mosaic is carried as raw bytes and never re-encoded.
  *
  * Layout, 384 bytes per tile:
- *   block 0  EDID 1.4 base — a DTD at a representable size (the tile, halved
- *            until it fits 4095 wide), the monitor name, the reference range
- *            limits (23-240 Hz, up to 600 MHz)
+ *   block 0  EDID 1.4 base — a DTD at a representable size (the tile, each
+ *            axis halved until it fits 4095), the monitor name, the reference
+ *            range limits (23-240 Hz, 15-255 kHz, up to 600 MHz)
  *   block 1  the reference CTA-861 extension, untouched
  *   block 2  DisplayID 1.3: a Type I timing (the real tile mode, preferred)
  *            and the Tiled Display Topology block
@@ -68,6 +69,8 @@ export const PIPE_MAX_WIDTH = 7680
  *  MHz at most: byte 81 is 0x3c, in 10 MHz steps. A test pins this to the
  *  bytes. The descriptor itself is never edited. */
 export const RANGE_LIMIT_MAX_MHZ = 600
+/** The same descriptor's line-rate ceiling: byte 80 is 0xff, in kHz. */
+export const RANGE_LIMIT_MAX_KHZ = 255
 
 export const MOSAIC_GRIDS = [
   { cols: 2, rows: 1, label: '2 × 1 — side by side' },
@@ -184,6 +187,9 @@ function pnpBytes(pnp: string): [number, number] {
 function baseDtd(m: MosaicTiming): number[] {
   const clk = Math.round(m.pixelClockMHz * 100)
   if (clk > 0xffff) throw new Error(`the base block's stand-in mode needs ${(clk / 100).toFixed(2)} MHz — past the 655.35 MHz a DTD can state`)
+  // The active and blanking fields are 12 bits, and past that the top bits wrap
+  // rather than fail. buildMosaic halves the stand-in to fit; this is the backstop.
+  if (Math.max(m.hActive, m.hBlank, m.vActive, m.vBlank) > 4095) throw new Error(`the base block's stand-in mode, ${m.hActive} x ${m.vActive}, does not fit a DTD's 12-bit fields`)
   const b = new Array(18).fill(0)
   b[0] = clk & 0xff
   b[1] = (clk >> 8) & 0xff
@@ -279,9 +285,15 @@ export function buildMosaic(r: MosaicRequest, nameFor?: (col: number, row: numbe
   const tileH = r.height / r.rows
   const tile = mosaicTiming(tileW, tileH, r.refreshHz)
 
+  // The base block's DTD holds 4095 at most on each axis, so its stand-in is the
+  // tile halved until it fits. The reference halves only the width, and its
+  // tiles taller than 4095 wrap (4320 lands as 224). None of its cases is that
+  // tall, so halving the height too changes no byte it pins.
   let safeW = tileW
   while (safeW > 4095) safeW = Math.ceil(safeW / 2)
-  const stand = mosaicTiming(safeW, tileH, r.refreshHz)
+  let safeH = tileH
+  while (safeH > 4095) safeH = Math.ceil(safeH / 2)
+  const stand = mosaicTiming(safeW, safeH, r.refreshHz)
 
   const topologyId = mosaicTopologyId(r)
 
@@ -408,13 +420,22 @@ export function checkMosaic(r: MosaicRequest): MosaicCheck[] {
   }
 
   if (r.width > 0 && r.height > 0 && r.refreshHz > 0 && r.cols >= 1 && r.rows >= 1) {
-    // The clock the tile's EDID states, rounded to 10 kHz like the Type I timing.
-    const mhz = toTiming(mosaicTiming(tileW, r.height / r.rows, r.refreshHz)).pixelClockHz / 1e6
+    // The mode the tile's EDID states, its clock rounded to 10 kHz like the Type I timing.
+    const t = toTiming(mosaicTiming(tileW, r.height / r.rows, r.refreshHz))
+    const mhz = t.pixelClockHz / 1e6
     if (mhz > RANGE_LIMIT_MAX_MHZ) {
       out.push({
         level: 'warn',
         what: `${mhz.toFixed(2)} MHz per plug is past the ${RANGE_LIMIT_MAX_MHZ} MHz its EDID allows`,
         detail: `The base block is a real display’s EDID, copied byte for byte, and its range-limits descriptor says ${RANGE_LIMIT_MAX_MHZ} MHz at most. This tile mode needs more, so each file contradicts itself. Whether a Mac minds is untested. A lower rate brings it down.`,
+      })
+    }
+    const khz = hFreq(t) / 1000
+    if (khz > RANGE_LIMIT_MAX_KHZ) {
+      out.push({
+        level: 'warn',
+        what: `${khz.toFixed(2)} kHz line rate per plug is past the ${RANGE_LIMIT_MAX_KHZ} kHz its EDID allows`,
+        detail: `The same copied range-limits descriptor says ${RANGE_LIMIT_MAX_KHZ} kHz at most. A tile ${t.vActive} lines tall at ${r.refreshHz} Hz scans more lines a second than that, so each file contradicts itself. Whether a Mac minds is untested. A lower rate brings it down.`,
       })
     }
   }

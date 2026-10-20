@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import fx from './fixtures/reference-tiles.json'
-import { buildMosaic, checkMosaic, DEFAULT_MOSAIC, mosaicErrors, RANGE_LIMIT_MAX_MHZ, tileLabel } from '../mosaic.ts'
+import { buildMosaic, checkMosaic, DEFAULT_MOSAIC, mosaicErrors, RANGE_LIMIT_MAX_KHZ, RANGE_LIMIT_MAX_MHZ, tileLabel } from '../mosaic.ts'
 import type { MosaicRequest } from '../mosaic.ts'
 import { decodeEdid } from '../edid/decode.ts'
 import { encodeDisplayId, encodeTiledTopology, decodeTiledTopology } from '../edid/displayid.ts'
@@ -122,6 +122,45 @@ describe('a built tile, read back', () => {
   })
 })
 
+describe('the base block’s stand-in', () => {
+  // The DTD's active fields are 12 bits. A tile past 4095 on either axis has to
+  // be halved to fit, or the top bits wrap: 4320 tall used to land as 224.
+  const standIn = (b: Uint8Array) => {
+    const d = decodeEdid(b).edid.descriptors[0]
+    return d.kind === 'dtd' ? d.timing : undefined
+  }
+
+  it('halves a tile taller than 4095, as it does a wide one', () => {
+    // 7680 x 4320 @30 as 2 x 1: the layout in the 30 Hz field reports.
+    const r = buildMosaic({ ...DEFAULT_MOSAIC, width: 7680, height: 4320, refreshHz: 30 })
+    expect([r.tileWidth, r.tileHeight]).toEqual([3840, 4320])
+    for (const t of r.tiles) {
+      const s = standIn(t.bytes)!
+      expect([s.hActive, s.vActive]).toEqual([3840, 2160])
+      expect(vFreq(s)).toBeCloseTo(30, 1)
+      // The mode a Mac bonds on is untouched: still the whole tile.
+      expect(primaryTiming(decodeEdid(t.bytes).edid)!.vActive).toBe(4320)
+    }
+    expect([r.baseTiming.hActive, r.baseTiming.vActive]).toEqual([3840, 2160])
+  })
+
+  it('states what baseTiming says, for every height the form allows', () => {
+    for (const height of [2160, 4095, 4096, 4320, 6144, 8192]) {
+      for (const width of [3840, 6144, 7680]) {
+        const r = buildMosaic({ ...DEFAULT_MOSAIC, width, height, refreshHz: 24 })
+        const s = standIn(r.tiles[0].bytes)!
+        expect([s.hActive, s.vActive], `${width} x ${height}`).toEqual([r.baseTiming.hActive, r.baseTiming.vActive])
+        expect(s.vActive).toBeLessThanOrEqual(4095)
+      }
+    }
+  })
+
+  it('makes 7680 x 4320 @60 as 2 x 1 buildable: the full-height stand-in needed 1066 MHz', () => {
+    const r = buildMosaic({ ...DEFAULT_MOSAIC, width: 7680, height: 4320, refreshHz: 60 })
+    expect([r.baseTiming.hActive, r.baseTiming.vActive]).toEqual([3840, 2160])
+  })
+})
+
 describe('what a Mac will make of it', () => {
   const level = (req: Partial<MosaicRequest>, what: RegExp) =>
     checkMosaic({ ...DEFAULT_MOSAIC, ...req }).find((c) => what.test(c.what))?.level
@@ -183,6 +222,28 @@ describe('what a Mac will make of it', () => {
     for (const c of fx.cases) {
       const inp = c.input
       expect(clock({ width: inp.width, height: inp.height, cols: inp.cols, rows: inp.rows, refreshHz: inp.hz })).toBeUndefined()
+    }
+  })
+
+  it('warns when a tile’s line rate is past the 255 kHz the copied range limits allow', () => {
+    const range = decodeEdid(buildMosaic(DEFAULT_MOSAIC).tiles[0].bytes).edid.descriptors.find((d) => d.kind === 'range')
+    expect(range && range.kind === 'range' && range.maxHorizontalKHz).toBe(RANGE_LIMIT_MAX_KHZ)
+    expect(RANGE_LIMIT_MAX_KHZ).toBe(255)
+
+    const lines = (req: Partial<MosaicRequest>) => find(req, /kHz line rate per plug/)
+    // 4320-tall tiles: 131.43 kHz at 30 Hz, 266.58 at 60.
+    expect(lines({ width: 7680, height: 4320, refreshHz: 30 })).toBeUndefined()
+    expect(lines({ width: 7680, height: 4320, refreshHz: 60 })!.what).toMatch(/^266\.58 kHz line rate per plug/)
+    expect(lines({ width: 7680, height: 4320, refreshHz: 60 })!.level).toBe('warn')
+    // A 2160-tall tile crosses at about 112 Hz. Narrow enough, it does so with
+    // the clock still under 600 MHz, so the two are separate warnings.
+    expect(lines({ width: 3840, height: 2160, refreshHz: 111 })).toBeUndefined()
+    expect(lines({ width: 3840, height: 2160, refreshHz: 120 })!.what).toMatch(/^274\.\d\d kHz/)
+    expect(find({ width: 3840, height: 2160, refreshHz: 120 }, /MHz per plug/)).toBeUndefined()
+    expect(lines({})).toBeUndefined()
+    for (const c of fx.cases) {
+      const inp = c.input
+      expect(lines({ width: inp.width, height: inp.height, cols: inp.cols, rows: inp.rows, refreshHz: inp.hz })).toBeUndefined()
     }
   })
 

@@ -192,12 +192,30 @@ refused any tile over 6144. The research turned up more than the reference had:
   tile) and 2 × 8192 × 2160 @60 (1113.49) without a word. It warns past 600 now. The
   descriptor stays byte-identical, and the reference fixtures still pin it.
   2 × 8192 × 2160 @30 is 548.98 MHz, under the line.
-- **Not checked:** the same descriptor's 255 kHz line-rate ceiling, which a 2160-tall
-  tile passes at about 115 Hz.
-- **Found, not fixed:** a 2 × 1 with tiles taller than 4095 (7680 × 4320 as 2 × 1, the
-  layout in the 30 Hz reports) writes the base block's stand-in DTD with its 12-bit
-  height wrapped, so it decodes as 3840 × 224. The stand-in is only ever halved for
-  width. The DisplayID Type I timing, which is what a Mac bonds on, is right.
+- **Also a line-rate warning**, the same day. The descriptor's other ceiling is 255 kHz
+  (byte 80, `ff`), pinned by a test the same way. A 2160-tall tile crosses it at about
+  112 Hz, a 4320-tall one at about 57.5 (7680 × 4320 @60 as 2 × 1 is 266.58 kHz a tile).
+  It is a separate warning because a narrow tile can cross it with the clock still under
+  600 MHz: 3840 × 2160 @120 as 2 × 1 is 274 kHz at 570.84 MHz.
+- **Fixed the same day: tall tiles wrapped the stand-in's height.** A tile taller than
+  4095 (7680 × 4320 as 2 × 1, the layout in the 30 Hz reports) wrote the base block's
+  stand-in DTD with its 12-bit height wrapped: 3840 × 224, and a 4096-tall tile 0 lines.
+  The stand-in was only ever halved for width. The reference builder does exactly the
+  same (it halves `sw` and never `sh`), so its bytes for tall tiles were never a tested
+  reference either, and none of the five fixture cases is taller than 2160. Otter now
+  halves the height too (3840 × 4320 → 3840 × 2160 at the same rate), and `baseDtd`
+  throws rather than wrap if anything ever gets past it. The fixtures still match byte
+  for byte. Refusing tall tiles was the other option, but that would have refused the
+  one layout people report bonding at 30 Hz. A side effect: 7680 × 4320 @60 as 2 × 1
+  builds now; its full-height stand-in needed 1066 MHz and used to throw. The DisplayID
+  Type I timing, which is what a Mac bonds on, was always right.
+- **Not a bug, just odd:** the stand-in's sync byte is `1e` (both syncs positive) in every
+  tile the reference built, while the Type I timing says V negative. It is the reference's
+  byte, so the fixtures pin it.
+- **Found, not fixed:** the stand-in's clock still has to fit a DTD's 655.35 MHz, and
+  halving for size does not always get it there. 7680 × 2160 as 2 × 1 refuses to build
+  from about 72 Hz, 6144 × 2160 from 90 Hz. The UI says so ("Can't build this") rather
+  than writing a wrapped clock. Every rate anyone reports bonding is under that.
 
 LivePremier Plus vendors the embed build, so a change here goes there too: `npm run
 build:embed`, commit `dist-embed/`, then its `npm run sync:otter-edid`.

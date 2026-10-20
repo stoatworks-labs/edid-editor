@@ -51,14 +51,18 @@ the test did, not macOS. Only 2 × 1 and 2 × 2 bond. Otter builds a tile wider 
 warning rather than refusing it, since nobody has shown a Mac bonding one and somebody ought to
 try. It also warns when a plug's clock goes past the 600 MHz that the copied range-limits
 descriptor allows: 12288 × 2160 at 60 needs 840 MHz a plug, and nobody knows yet whether a Mac
-minds.
+minds. The same descriptor stops the line rate at 255 kHz, which two 3840 × 4320 plugs at 60 Hz
+go past, so that gets a warning too.
 
 The mosaic layout isn't Otter's invention. It reproduces, byte for byte, a
 reference builder whose files have bonded on macOS 26 and 27. Its base and CTA
 blocks are a real display's EDID, because EDIDs built from scratch never bonded
 (macOS, it turns out, has opinions).
 A test pins the match against the reference's own output. The topology id is
-Stoatworks Labs' own (`SWK`).
+Stoatworks Labs' own (`SWK`). One deliberate difference: a plug taller than 4095 lines gets
+its base-block fallback halved in height as well as width. The reference only halves the
+width, so its tall plugs wrap the 12-bit height field (4320 comes out as 224), and none of
+the files that bonded were that tall.
 
 All three modes name the EDID, and all three show the same two answers on the right.
 

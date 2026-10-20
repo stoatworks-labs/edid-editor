@@ -72,7 +72,10 @@ src/components/    UI only. No arithmetic lives here.
   "clean up" `mosaic.ts`, do not swap its timing for `cvt.ts`, and never pass a
   tile through `encodeEdid` — the tiles now survive a decode/encode, but the claim
   rests on the reference's bytes, not on the encoder. `mosaic.test.ts` compares
-  against the reference's own output.
+  against the reference's own output. The one departure: a tile taller than 4095
+  gets its base-block stand-in halved in height as well as width. The reference
+  halves only the width, so its tall tiles wrap the DTD's 12-bit height (4320
+  lands as 224); none of its cases is that tall.
 - **DisplayID tag numbers depend on the section version.** 1.3 (`0x12`): Type I
   timing `0x03`, tiled `0x12`. 2.0 (`0x20`): Type VII `0x22`, tiled `0x28`. Type I
   clocks are 10 kHz units, Type VII 1 kHz. A section may declare more bytes than
@@ -102,7 +105,7 @@ src/components/    UI only. No arithmetic lives here.
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 122 tests.
+  fixture tile) saves back byte for byte when not edited. 126 tests.
 
 **Assumed, and NOT verified:**
 
@@ -117,7 +120,7 @@ src/components/    UI only. No arithmetic lives here.
   is inferred from who reported it); 12288 on 27, where the Barco E3 stopped,
   not macOS. Only 2 x 1 and 2 x 2 bond. Nobody has shown a tile wider than 6144
   bonding, so one builds with a warning, not an error. Whether a Mac minds a
-  tile clocked past the 600 MHz in the copied range limits is untested.
+  tile past the copied range limits (600 MHz, 255 kHz line rate) is untested.
 - **CVT-RB v2 parameters** (80-px blanking, 8-line vsync, 1 kHz clock step) are
   from the CVT 1.2 description, not checked against a reference implementation
   the way v1 was. The relative ordering (v2 < v1 < standard) is tested; the

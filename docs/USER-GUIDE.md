@@ -48,11 +48,14 @@ tear. If the Mac lists the plugs as separate displays, they haven't bonded and a
   you can try a 2 × 8192, but don't promise it to anyone until you have. Three or four across never
   bonds on a Mac.
 - Otter warns when a plug's pixel clock goes past **600 MHz**, the most the copied range-limits
-  descriptor allows (12288 × 2160 at 60 needs 840 MHz a plug). Whether a Mac minds is untested.
+  descriptor allows (12288 × 2160 at 60 needs 840 MHz a plug), and when its line rate goes past
+  **255 kHz**, the same descriptor's other ceiling (3840 × 4320 plugs at 60 Hz). Whether a Mac
+  minds either is untested.
 - A second mosaic on the same Mac needs a different **mosaic number**, because the Mac groups plugs by it.
 
 The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. Otter hasn't
-loaded its own files into a Mac.
+loaded its own files into a Mac. The one exception is a plug taller than 4095 lines: the reference's
+fallback mode in the base block wraps there, so Otter halves its height instead.
 
 All three modes name the EDID, and all three show the same two answers on the right.
 
