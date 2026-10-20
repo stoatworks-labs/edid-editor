@@ -224,6 +224,11 @@ export const DEVICES: Device[] = [
     model: 'Aquilon RS / C (HDMI 2.0 input card)',
     role: 'sink',
     maxRefreshHz: 144,
+    // "4K" read as up to DCI 4096 × 2160, which is inferred; the page says 4K.
+    namedFormats: [
+      { width: 4096, height: 2160, label: '4K60' },
+      { width: 8192, height: 1080, label: 'custom formats such as 8192 × 1080 @ 60' },
+    ],
     capacityModes: [
       {
         id: 'hdmi20',
@@ -255,6 +260,12 @@ export const DEVICES: Device[] = [
     model: 'Aquilon RS / C (DisplayPort input card)',
     role: 'sink',
     maxRefreshHz: 144,
+    // As above, "4K" read as up to 4096 × 2160 (inferred). 5K is the DP 1.4 mode's.
+    namedFormats: [
+      { width: 4096, height: 2160, label: '4K60' },
+      { width: 5120, height: 2880, label: '5K60 in DP 1.4 mode' },
+      { width: 8192, height: 1080, label: 'custom formats to 8192 × 1080 @ 60' },
+    ],
     capacityModes: [
       {
         id: 'dp12x4',

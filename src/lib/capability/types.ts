@@ -68,6 +68,13 @@ export interface CapacityMode {
   connectors: Connector[]
 }
 
+export interface NamedFormat {
+  width: number
+  height: number
+  /** As the vendor puts it, e.g. "custom formats such as 8192 × 1080 @ 60". */
+  label: string
+}
+
 export interface Device {
   id: string
   vendor: string
@@ -87,6 +94,14 @@ export interface Device {
   /** Widest active line the device will take, where documented. */
   maxHActive?: number
   maxVActive?: number
+  /**
+   * The formats the vendor names for these inputs, each as a box: a mode no
+   * wider and no taller than one of them is a format the vendor documents. A
+   * mode outside every box is not refused, because vendors list examples
+   * rather than ceilings, but the verdict says it is not one they name and may
+   * not be accepted. Only what the vendor actually names (rule 2 in devices.ts).
+   */
+  namedFormats?: NamedFormat[]
   capacityModes: CapacityMode[]
   /**
    * Take another device's capacity modes verbatim, by id.

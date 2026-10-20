@@ -107,7 +107,7 @@ need to look at, and a tool that won't open it is no use at the one moment it ma
 | Symptom | Cause |
 | --- | --- |
 | **Every HDMI input says no after I enabled DSC** | Correct. DSC needs a fixed-rate link. |
-| **A device says "conditional"** | It takes the mode only in a particular capacity mode — the answer names which. |
+| **A device says "conditional"** | It takes the mode only in a particular capacity mode — the answer names which. Or, on the Aquilon cards, the mode fits the port's clock but isn't one of the formats Analog Way names, so it may not be accepted. |
 | **An imported EDID has a checksum error** | Reported deliberately rather than refused. Look at it. |
 | **A verdict disagrees with a manufacturer** | Every row carries its source and the date it was read. Check it — the table is paperwork, not measurement. |
 | **The processor rejected an EDID this built** | Possible, and untested — no hardware has ever been fed one of these. |

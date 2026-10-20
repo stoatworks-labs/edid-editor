@@ -133,6 +133,12 @@ export function evaluateDevice(d: Device, t: Timing, s: SignalOptions): DeviceVe
   if (d.maxHActive !== undefined && t.hActive > d.maxHActive) {
     warnings.push(`${t.hActive} px wide exceeds the documented ${d.maxHActive} px maximum.`)
   }
+  if (d.namedFormats?.length && !d.namedFormats.some((f) => t.hActive <= f.width && t.vActive <= f.height)) {
+    warnings.push(
+      `${t.hActive} × ${t.vActive} is not a format ${d.vendor} names for these inputs ` +
+        `(${d.namedFormats.map((f) => f.label).join('; ')}), so it may not be accepted. Untested here.`,
+    )
+  }
 
   const modes = d.capacityModes.map((m) => checkMode(m, t, s))
   const working = modes.filter((m) => m.ok)

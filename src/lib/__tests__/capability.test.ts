@@ -5,6 +5,7 @@ import { DEFAULT_SIGNAL, dpRequirement, hdmiRequirement, dviRequirement } from '
 import { ctaByVic } from '../timing/cta.ts'
 import { cvtRb, cvtRb2 } from '../timing/cvt.ts'
 import type { SignalOptions } from '../link.ts'
+import { mosaicTiming, toTiming } from '../mosaic.ts'
 
 const sig = (o: Partial<SignalOptions> = {}): SignalOptions => ({ ...DEFAULT_SIGNAL, ...o })
 const dev = (id: string) => DEVICE_LIST.find((d) => d.id === id)!
@@ -169,6 +170,25 @@ describe('device verdicts', () => {
 
     const v1 = evaluateDevice(dev('aw-livepremier-aquilon-dp'), cvtRb(3840, 2160, { refreshHz: 120 }), sig())
     expect(v1.status).toBe('unsupported')
+  })
+
+  it('an Aquilon card says when a mode is not one Analog Way names', () => {
+    // A 16384 x 2160 mosaic's tile: 549 MHz at 30 Hz fits an HDMI 2.0 port,
+    // but Analog Way's custom formats go "such as 8192x1080", not 2160 tall.
+    const tile = toTiming(mosaicTiming(8192, 2160, 30))
+    for (const id of ['aw-livepremier-aquilon', 'aw-livepremier-aquilon-dp']) {
+      const v = evaluateDevice(dev(id), tile, sig())
+      expect(v.status, id).toBe('conditional')
+      expect(v.warnings.join(' '), id).toMatch(/8192 × 2160 is not a format Analog Way names .* may not be accepted/)
+    }
+    // The formats it does name stay clean.
+    const named = [p2160p60, cvtRb2(8192, 1080, { refreshHz: 60 }), cvtRb2(4096, 2160, { refreshHz: 60 })]
+    for (const t of named) {
+      const v = evaluateDevice(dev('aw-livepremier-aquilon'), t, sig({ bpc: 8 }))
+      expect(v.warnings.join(' '), `${t.hActive} x ${t.vActive}`).not.toMatch(/not a format/)
+    }
+    const fiveK = evaluateDevice(dev('aw-livepremier-aquilon-dp'), cvtRb2(5120, 2880, { refreshHz: 60 }), sig({ bpc: 8 }))
+    expect(fiveK.warnings.join(' ')).not.toMatch(/not a format/)
   })
 
   it('Brompton SX40 accepts a high frame rate that everything else refuses', () => {

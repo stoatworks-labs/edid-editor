@@ -17757,6 +17757,15 @@ var DEVICES = [
 		model: "Aquilon RS / C (HDMI 2.0 input card)",
 		role: "sink",
 		maxRefreshHz: 144,
+		namedFormats: [{
+			width: 4096,
+			height: 2160,
+			label: "4K60"
+		}, {
+			width: 8192,
+			height: 1080,
+			label: "custom formats such as 8192 × 1080 @ 60"
+		}],
 		capacityModes: [{
 			id: "hdmi20",
 			label: "4x HDMI 2.0",
@@ -17782,6 +17791,23 @@ var DEVICES = [
 		model: "Aquilon RS / C (DisplayPort input card)",
 		role: "sink",
 		maxRefreshHz: 144,
+		namedFormats: [
+			{
+				width: 4096,
+				height: 2160,
+				label: "4K60"
+			},
+			{
+				width: 5120,
+				height: 2880,
+				label: "5K60 in DP 1.4 mode"
+			},
+			{
+				width: 8192,
+				height: 1080,
+				label: "custom formats to 8192 × 1080 @ 60"
+			}
+		],
 		capacityModes: [{
 			id: "dp12x4",
 			label: "4x DisplayPort 1.2",
@@ -18373,6 +18399,7 @@ function evaluateDevice(d, t, s) {
 	if (d.minRefreshHz !== void 0 && rate < d.minRefreshHz - .01) warnings.push(`${rate.toFixed(2)} Hz is below the documented ${d.minRefreshHz} Hz minimum.`);
 	if (d.maxRefreshHz !== void 0 && rate > d.maxRefreshHz + .01) warnings.push(`${rate.toFixed(2)} Hz exceeds the documented ${d.maxRefreshHz} Hz maximum.`);
 	if (d.maxHActive !== void 0 && t.hActive > d.maxHActive) warnings.push(`${t.hActive} px wide exceeds the documented ${d.maxHActive} px maximum.`);
+	if (d.namedFormats?.length && !d.namedFormats.some((f) => t.hActive <= f.width && t.vActive <= f.height)) warnings.push(`${t.hActive} × ${t.vActive} is not a format ${d.vendor} names for these inputs (${d.namedFormats.map((f) => f.label).join("; ")}), so it may not be accepted. Untested here.`);
 	const modes = d.capacityModes.map((m) => checkMode(m, t, s));
 	const working = modes.filter((m) => m.ok);
 	if (working.length === 0) return {
