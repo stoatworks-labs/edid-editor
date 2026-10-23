@@ -26,7 +26,7 @@ path is dead).
 **Two modes + two answers.** Simple mode: resolution + rate + name → a whole
 EDID 1.4. Advanced mode: every field, incl. CTA-861 and DisplayID 2.0. Right
 column always shows (a) the minimum HDMI/DP/DVI version the mode needs and
-(b) a per-model support matrix, 21 devices, Analog Way / Barco / PixelHue /
+(b) a per-model support matrix, 23 devices, Analog Way / Barco / PixelHue /
 Brompton / NovaStar / disguise / Green Hippo.
 
 **Containerised 2026-08-20**: `fleet.json` `static-build` + `unraid.json`

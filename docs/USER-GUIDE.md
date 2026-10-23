@@ -67,7 +67,7 @@ All three modes name the EDID, and all three show the same two answers on the ri
 rate and payload, then the minimum HDMI version (1.0–1.2, 1.3/1.4, 2.0, or which FRL rate), the
 minimum DisplayPort rate at 4 and 2 lanes, and whether DVI needs one link or two.
 
-**Which hardware takes it.** Twenty-one models across the major event-video vendors, each answering
+**Which hardware takes it.** Twenty-three models across the major event-video vendors, each answering
 **yes / conditional / no**, and **where the answer is conditional, the capacity mode you have to
 configure to get it**:
 

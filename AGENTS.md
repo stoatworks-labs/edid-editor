@@ -105,7 +105,7 @@ src/components/    UI only. No arithmetic lives here.
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 127 tests.
+  fixture tile) saves back byte for byte when not edited. 132 tests.
 
 **Assumed, and NOT verified:**
 
@@ -131,10 +131,20 @@ src/components/    UI only. No arithmetic lives here.
   cited per claim with a read date. Several rows are marked `inferred` (a limit
   that follows from a documented one) or `unverified` (PDS-902 — a placeholder
   with no citation at all, and the UI says so).
+- **The NovaStar MX2000 Pro and MX6000 Pro rows rest on three inferences**,
+  each stated in the device notes. 48G FRL on the 2×HDMI 2.1 card: NovaStar
+  list 8192×4320 @30 12-bit 4:4:4 there, 39.1 Gbps on CVT-RB2, and 40G carries
+  35.6. DSC on the 1×DP 1.4 (8K@60Hz) card: 7680×4320 @60 does not fit HBR3
+  uncompressed, and NovaStar never say DSC. No pixel-clock ceiling on any of
+  their DP cards: NovaStar state none, and their own table lists 4096×2160 @75
+  8-bit on the DP 1.2 card, about 700 MHz. The 8K@60 card's 7680-pixel width
+  limit is in its note only; a capacity mode has no width of its own.
 - **DisplayPort capacity is the raw link budget after line coding.** Real
   capacity is a little lower because of per-line transfer-unit overhead. The UI
   flags anything above 98% as marginal. HDMI TMDS is a clock ceiling and is
-  exact.
+  exact. HDMI FRL, on a port with an `frlBps` budget, is the raw rate after
+  16b/18b only: FEC and packet overhead are not modelled, and nothing flags a
+  near-full FRL link.
 
 ## Sources on this machine
 

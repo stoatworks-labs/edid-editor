@@ -42,6 +42,11 @@ export interface Connector {
   /** DisplayPort link budget, when the connector is DP. */
   dpLaneBps?: number
   dpLanes?: number
+  /**
+   * HDMI 2.1 FRL budget in bits/s, before 16b/18b coding, when the port has
+   * one. A mode TMDS cannot carry is then checked against this instead.
+   */
+  frlBps?: number
   maxBpc: 8 | 10 | 12 | 16
   formats: ColorFormat[]
   hdcp: string[]
