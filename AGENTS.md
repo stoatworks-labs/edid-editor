@@ -101,11 +101,24 @@ src/components/    UI only. No arithmetic lives here.
   `drm_mode_displayid_detailed` in `drm_edid.c`), read 2026-08-20.
 - The Tiled Display Topology layout, including the high location/count bits in
   byte 3, against `drm_parse_tiled_block` (read 2026-09-23).
+- What 4:2:2 costs each link, against AMD's display code in the Linux kernel
+  (`drivers/gpu/drm/amd/display/dc`, read 2026-10-24), not against the HDMI or
+  VESA specs, which nobody here has read. HDMI carries it in a 12-bit
+  container, 24 bits per pixel at any depth: the FRL capacity computation sets
+  K_CD = 1 for 4:2:2 and bpc / 8 for everything else
+  (`frl_capacity_computations_uncompressed_video` in `link/link_validation.c`,
+  and `dml/dml1_frl_cap_chk.c`), and DCN32's mode library lists 4:2:2 as 24
+  bpp on HDMI and HDMI FRL but 16/20/24 on DisplayPort
+  (`dml/dcn32/display_mode_vba_util_32.c`). The DP bandwidth check charges
+  2 x bpc (`dc_bandwidth_in_kbps_from_timing`, `dsc/dc_dsc.c`). TMDS holds 4:2:2
+  at the 8-bit character rate (`drm_hdmi_compute_mode_clock`). NovaStar's
+  MX2000 Pro table agrees: 4:2:2 at every depth shares 8-bit 4:4:4's
+  frame-rate cell on every card, and a test checks each row.
 - Mosaic output is byte-identical to the reference builder's across five
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 132 tests.
+  fixture tile) saves back byte for byte when not edited. 138 tests.
 
 **Assumed, and NOT verified:**
 

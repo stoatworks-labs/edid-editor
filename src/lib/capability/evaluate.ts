@@ -72,11 +72,11 @@ function checkConnector(c: Connector, t: Timing, s: SignalOptions): ConnectorVer
       // An HDMI 2.1 port moves to FRL when TMDS runs out, and FRL is a
       // payload budget, not a character rate.
       const capacity = c.frlBps * FRL_EFFICIENCY
-      const payload = payloadBps(t, s)
+      const payload = payloadBps(t, s, 'hdmi')
       headroom = payload / capacity
       if (payload > capacity) {
         reasons.push(
-          `needs ${(payload / 1e9).toFixed(2)} Gbps at ${bitsPerPixel(s)} bpp, FRL carries ${(capacity / 1e9).toFixed(2)} Gbps`,
+          `needs ${(payload / 1e9).toFixed(2)} Gbps at ${bitsPerPixel(s, 'hdmi')} bpp, FRL carries ${(capacity / 1e9).toFixed(2)} Gbps`,
         )
       }
     } else if (!Number.isFinite(rate)) {
@@ -103,11 +103,11 @@ function checkConnector(c: Connector, t: Timing, s: SignalOptions): ConnectorVer
     let linkRatio = 0
     if (c.dpLaneBps && c.dpLanes) {
       const capacity = c.dpLaneBps * c.dpLanes * DP_EFFICIENCY
-      const payload = payloadBps(t, s)
+      const payload = payloadBps(t, s, 'displayport')
       linkRatio = payload / capacity
       if (payload > capacity) {
         reasons.push(
-          `needs ${(payload / 1e9).toFixed(2)} Gbps at ${bitsPerPixel(s)} bpp, link carries ${(capacity / 1e9).toFixed(2)} Gbps`,
+          `needs ${(payload / 1e9).toFixed(2)} Gbps at ${bitsPerPixel(s, 'displayport')} bpp, link carries ${(capacity / 1e9).toFixed(2)} Gbps`,
         )
       } else if (linkRatio > 0.98) {
         reasons.push(

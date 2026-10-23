@@ -2,6 +2,7 @@ import type { Edid, CtaExtension, DetailedTimingDescriptor, DisplayIdExtension }
 import { blankEdid, emptyCta } from './edid/defaults.ts'
 import { dtdLimit } from './edid/encode.ts'
 import type { SignalOptions } from './link.ts'
+import { FRL_EFFICIENCY, bitsPerPixel } from './link.ts'
 import { cvt, cvtRb, cvtRb2 } from './timing/cvt.ts'
 import { gtf } from './timing/gtf.ts'
 import { CTA_TIMINGS } from './timing/cta.ts'
@@ -367,11 +368,10 @@ function aspectFor(t: Timing): string {
 
 /** Smallest FRL rate index (1-6) that carries the mode. */
 function frlRateFor(clockHz: number, s: SignalOptions): number {
-  const bpp = s.dsc ? s.dscTargetBpp : s.format === 'ycbcr422' ? 16 : s.format === 'ycbcr420' ? (s.bpc * 3) / 2 : s.bpc * 3
-  const payload = clockHz * bpp
+  const payload = clockHz * bitsPerPixel(s, 'hdmi')
   const rates = [9e9, 18e9, 24e9, 32e9, 40e9, 48e9]
   for (let i = 0; i < rates.length; i++) {
-    if (payload <= rates[i] * (16 / 18)) return i + 1
+    if (payload <= rates[i] * FRL_EFFICIENCY) return i + 1
   }
   return 6
 }

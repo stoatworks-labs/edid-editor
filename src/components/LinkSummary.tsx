@@ -22,6 +22,11 @@ export function LinkSummary({ timing, signal }: { timing: Timing; signal: Signal
   const dp4 = dpRequirement(timing, signal, 4)
   const dp2 = dpRequirement(timing, signal, 2)
   const dvi = dviRequirement(timing, signal)
+  // 4:2:2 is the one format the two links charge differently, so it shows both.
+  const hdmiBpp = bitsPerPixel(signal, 'hdmi')
+  const dpBpp = bitsPerPixel(signal, 'displayport')
+  const perLink = (f: (bpp: number) => string) =>
+    hdmiBpp === dpBpp ? f(hdmiBpp) : `${f(hdmiBpp)} HDMI, ${f(dpBpp)} DP`
 
   return (
     <Panel title="Signal cost and required interface">
@@ -34,8 +39,8 @@ export function LinkSummary({ timing, signal }: { timing: Timing; signal: Signal
           v={`${vFreq(timing).toFixed(3)} Hz`}
         />
         {timing.interlaced ? <Stat k="Frame rate" v={`${frameRate(timing).toFixed(3)} Hz`} /> : null}
-        <Stat k="Bits per pixel" v={`${bitsPerPixel(signal)}`} />
-        <Stat k="Payload" v={formatBps(timing.pixelClockHz * bitsPerPixel(signal))} />
+        <Stat k="Bits per pixel" v={perLink((bpp) => `${bpp}`)} />
+        <Stat k="Payload" v={perLink((bpp) => formatBps(timing.pixelClockHz * bpp))} />
       </div>
 
       <h3>Minimum interface version</h3>

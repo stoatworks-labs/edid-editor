@@ -50,30 +50,41 @@ export const DEFAULT_SIGNAL: SignalOptions = {
   vrrMaxHz: 60,
 }
 
+/** The two families of link that charge a mode differently for 4:2:2. */
+export type LinkKind = 'hdmi' | 'displayport'
+
 /**
- * Bits carried per pixel.
+ * Bits carried per pixel on a given kind of link.
  *
- * 4:2:2 is the odd one: it subsamples chroma horizontally but HDMI always
- * transports it in a fixed 12-bit-per-component container, so it costs the same
- * as 8-bit 4:4:4 regardless of the requested depth. Treating it as
- * 2 x bpc would overstate 12-bit 4:2:2 by half.
+ * 4:2:2 is the odd one, and the two links disagree about it:
+ *
+ * - HDMI carries 4:2:2 in a fixed 12-bit-per-component container, two
+ *   components per pixel, so it costs 24 bits per pixel whatever depth is
+ *   asked for — the same as 8-bit 4:4:4. On TMDS that is why the character
+ *   rate stays at the pixel clock; FRL charges it the same 24 (K_CD = 1 in
+ *   the FRL capacity computation, where every other format has bpc / 8).
+ * - DisplayPort packs two components per pixel at the depth asked for, so
+ *   2 x bpc: 16, 20 or 24.
+ *
+ * So 8-bit 4:2:2 is 16 bpp on DisplayPort and 24 on HDMI, and 12-bit is 24 on
+ * both. A single figure for both links understates one of them.
  */
-export function bitsPerPixel(s: SignalOptions): number {
+export function bitsPerPixel(s: SignalOptions, link: LinkKind): number {
   if (s.dsc) return s.dscTargetBpp
   switch (s.format) {
     case 'rgb444':
     case 'ycbcr444':
       return s.bpc * 3
     case 'ycbcr422':
-      return 16
+      return link === 'hdmi' ? 24 : s.bpc * 2
     case 'ycbcr420':
       return (s.bpc * 3) / 2
   }
 }
 
 /** Payload rate in bits per second. */
-export function payloadBps(t: Timing, s: SignalOptions): number {
-  return t.pixelClockHz * bitsPerPixel(s)
+export function payloadBps(t: Timing, s: SignalOptions, link: LinkKind): number {
+  return t.pixelClockHz * bitsPerPixel(s, link)
 }
 
 /**
@@ -134,7 +145,7 @@ export interface HdmiRequirement {
 }
 
 export function hdmiRequirement(t: Timing, s: SignalOptions): HdmiRequirement {
-  const payload = payloadBps(t, s)
+  const payload = payloadBps(t, s, 'hdmi')
   const tmds = tmdsCharacterRateHz(t, s)
 
   if (!s.dsc && Number.isFinite(tmds)) {
@@ -210,7 +221,7 @@ export interface DpRequirement {
 }
 
 export function dpRequirement(t: Timing, s: SignalOptions, lanes: 1 | 2 | 4 = 4): DpRequirement {
-  const payload = payloadBps(t, s)
+  const payload = payloadBps(t, s, 'displayport')
   for (const r of DP_RATES) {
     const capacity = r.laneBps * lanes * r.efficiency
     if (payload <= capacity) {

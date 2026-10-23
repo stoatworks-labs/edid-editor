@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { DEVICES, DEVICE_LIST } from '../capability/devices.ts'
 import { evaluateDevice } from '../capability/evaluate.ts'
-import { DEFAULT_SIGNAL, dpRequirement, hdmiRequirement, dviRequirement } from '../link.ts'
+import { DEFAULT_SIGNAL, bitsPerPixel, dpRequirement, hdmiRequirement, dviRequirement } from '../link.ts'
 import { ctaByVic } from '../timing/cta.ts'
-import { cvtRb, cvtRb2 } from '../timing/cvt.ts'
+import { cvt, cvtRb, cvtRb2 } from '../timing/cvt.ts'
 import type { SignalOptions } from '../link.ts'
 import type { Connector } from '../capability/types.ts'
 import type { Timing } from '../timing/types.ts'
@@ -109,6 +109,36 @@ describe('link requirements', () => {
     const b = hdmiRequirement(p2160p60, sig({ format: 'ycbcr422', bpc: 12 }))
     expect(a.tmdsCharacterRateHz).toBe(b.tmdsCharacterRateHz)
     expect(a.version!.name).toBe('HDMI 2.0')
+  })
+
+  it('4:2:2 is 24 bits per pixel on HDMI and 2 x bpc on DisplayPort', () => {
+    const at = (bpc: 8 | 10 | 12) => sig({ format: 'ycbcr422', bpc })
+    expect([8, 10, 12].map((b) => bitsPerPixel(at(b as 8 | 10 | 12), 'hdmi'))).toEqual([24, 24, 24])
+    expect([8, 10, 12].map((b) => bitsPerPixel(at(b as 8 | 10 | 12), 'displayport'))).toEqual([16, 20, 24])
+    // Every other format, and any DSC target, costs the same on both.
+    for (const s of [sig(), sig({ format: 'ycbcr444', bpc: 10 }), sig({ format: 'ycbcr420', bpc: 12 }), sig({ dsc: true, dscTargetBpp: 9 })]) {
+      expect(bitsPerPixel(s, 'hdmi')).toBe(bitsPerPixel(s, 'displayport'))
+    }
+  })
+
+  it('FRL charges 4:2:2 what it charges 8-bit 4:4:4, whatever the depth', () => {
+    // 1188 MHz x 24 = 28.5 Gbps, just past 32G's 28.4 after 16b/18b. At
+    // 16 bpp it would have claimed 24G.
+    const full = hdmiRequirement(p2160p120, sig())
+    for (const bpc of [8, 10, 12] as const) {
+      const h = hdmiRequirement(p2160p120, sig({ format: 'ycbcr422', bpc }))
+      expect(h.viaTmds).toBe(false)
+      expect(h.payloadBps).toBe(full.payloadBps)
+      expect(h.version!.name).toContain('40G')
+    }
+  })
+
+  it('DisplayPort charges deep 4:2:2 for its depth', () => {
+    // 2160p60 on two lanes: 9.5 Gbps at 8-bit and 11.9 at 10-bit fit HBR3's
+    // 12.96; 12-bit is 14.3 and needs UHBR10.
+    expect(dpRequirement(p2160p60, sig({ format: 'ycbcr422', bpc: 8 }), 2).rate!.name).toBe('HBR3 (8.1G)')
+    expect(dpRequirement(p2160p60, sig({ format: 'ycbcr422', bpc: 10 }), 2).rate!.name).toBe('HBR3 (8.1G)')
+    expect(dpRequirement(p2160p60, sig({ format: 'ycbcr422', bpc: 12 }), 2).rate!.name).toBe('UHBR10')
   })
 
   it('2160p120 10-bit 4:4:4 needs 48G FRL', () => {
@@ -284,6 +314,55 @@ describe('device verdicts', () => {
     const both = port({ ...hdmi21, dsc: true }, eightK60, dsc)
     expect(both.ok).toBe(true)
     expect(both.headroom).toBeCloseTo(0.58, 2)
+  })
+
+  it('an MX2000 Pro card takes 12-bit 4:2:2 exactly where it takes 8-bit 4:4:4', () => {
+    // NovaStar's video source table gives 4:2:2 at 8, 10 and 12 bits the same
+    // frame-rate cell as 8-bit 4:4:4, on every card. 24 bits per pixel either
+    // way: HDMI's 4:2:2 container, or DisplayPort's 2 x 12.
+    const rows: [string, number, number, number][] = [
+      ['hdmi20x4', 4096, 2160, 60], ['hdmi20x4', 3840, 2160, 60], ['hdmi20x4', 2560, 1440, 120], ['hdmi20x4', 1920, 1080, 240],
+      ['hdmi21x2', 8192, 4320, 30], ['hdmi21x2', 7680, 4320, 30], ['hdmi21x2', 5120, 2880, 75], ['hdmi21x2', 4096, 2160, 120],
+      ['hdmi21x2', 3840, 2160, 120], ['hdmi21x2', 2560, 1440, 240], ['hdmi21x2', 1920, 1080, 240],
+      ['dp12x4', 4096, 2160, 75], ['dp12x4', 3840, 2160, 75], ['dp12x4', 2560, 1440, 144], ['dp12x4', 1920, 1080, 240],
+      ['dp14x2', 8192, 4320, 25], ['dp14x2', 7680, 4320, 30], ['dp14x2', 5120, 2880, 60], ['dp14x2', 4096, 2160, 100],
+      ['dp14x2', 3840, 2160, 120], ['dp14x2', 2560, 1440, 240], ['dp14x2', 1920, 1080, 240],
+      ['dp14-8k60', 7680, 4320, 60], ['dp14-8k60', 5120, 2880, 120], ['dp14-8k60', 4096, 2160, 144],
+      ['dp14-8k60', 3840, 2160, 240], ['dp14-8k60', 2560, 1440, 240], ['dp14-8k60', 1920, 1080, 240],
+    ]
+    const card = (id: string, t: Timing, s: SignalOptions) =>
+      evaluateDevice(dev('novastar-mx2000pro'), t, s).modes.find((m) => m.mode.id === id)!.connectors[0]
+    for (const [id, w, h, max] of rows) {
+      for (const hz of [24, 25, 30, 48, 50, 60, 75, 100, 120, 144, 240].filter((r) => r <= max)) {
+        const t = cvtRb2(w, h, { refreshHz: hz })
+        const full = card(id, t, sig())
+        const sub = card(id, t, sig({ format: 'ycbcr422', bpc: 12 }))
+        expect([sub.ok, sub.headroom], `${id} ${w}x${h}@${hz}`).toEqual([full.ok, full.headroom])
+      }
+    }
+  })
+
+  it('deep 4:2:2 can outgrow the MX2000 Pro’s DP 1.2 card, and 8K60 4:2:2 its HDMI 2.1 card', () => {
+    // 4096 x 2160 @60 on standard CVT blanking is 760 MHz. At 12-bit 4:2:2
+    // that is 18.24 Gbps, past HBR2, so the HDMI 2.1 card takes it. At
+    // 10-bit it is 15.20 Gbps, and the DP 1.2 card still does.
+    const dci60 = cvt(4096, 2160, { refreshHz: 60 })
+    const v = evaluateDevice(dev('novastar-mx2000pro'), dci60, sig({ format: 'ycbcr422', bpc: 12 }))
+    expect(v.requiredMode!.id).toBe('hdmi21x2')
+    expect(v.modes.find((m) => m.mode.id === 'dp12x4')!.connectors[0].reasons).toEqual([
+      'needs 18.24 Gbps at 24 bpp, link carries 17.28 Gbps',
+    ])
+    const ten = evaluateDevice(dev('novastar-mx2000pro'), dci60, sig({ format: 'ycbcr422', bpc: 10 }))
+    expect(ten.status).toBe('supported')
+    expect(ten.requiredMode!.id).toBe('dp12x4')
+
+    // 7680 x 4320 @60 4:2:2 is 49.65 Gbps on FRL at any depth: past 48G, and
+    // nothing here decodes DSC except the 8K@60 DP card.
+    const eightK60 = evaluateDevice(dev('novastar-mx2000pro'), cvtRb2(7680, 4320, { refreshHz: 60 }), sig({ format: 'ycbcr422', bpc: 10 }))
+    expect(eightK60.status).toBe('unsupported')
+    expect(eightK60.modes.find((m) => m.mode.id === 'hdmi21x2')!.connectors[0].reasons).toEqual([
+      'needs 49.65 Gbps at 24 bpp, FRL carries 42.67 Gbps',
+    ])
   })
 
   it('reports unknown rather than guessing where no capability is recorded', () => {

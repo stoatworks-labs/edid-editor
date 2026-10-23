@@ -104,6 +104,18 @@ describe('signal options reach the EDID', () => {
     expect(built.notes.join(' ')).toMatch(/commits the link to FRL/)
   })
 
+  it('the FRL rate it states for 4:2:2 is the one 8-bit 4:4:4 needs', () => {
+    // 2160p120 is 1188 MHz: FRL at 24 bits per pixel whatever the 4:2:2
+    // depth, which is 40G, not the 24G that 16 bits per pixel would claim.
+    const rate = (o: Partial<typeof DEFAULT_SIGNAL>) => {
+      const { edid } = roundTrip(req({ hActive: 3840, vActive: 2160, refreshHz: 120, signal: { ...DEFAULT_SIGNAL, ...o } }))
+      return (edid.extensions.find((e) => e.kind === 'cta') as CtaExtension).hdmiForumVsdb!.maxFrlRate
+    }
+    expect(rate({})).toBe(5)
+    expect(rate({ format: 'ycbcr422', bpc: 8 })).toBe(5)
+    expect(rate({ format: 'ycbcr422', bpc: 12 })).toBe(5)
+  })
+
   it('VRR writes the window it was given, and survives the round trip', () => {
     const { edid } = roundTrip(
       req({ signal: { ...DEFAULT_SIGNAL, vrr: true, vrrMinHz: 48, vrrMaxHz: 144 } }),

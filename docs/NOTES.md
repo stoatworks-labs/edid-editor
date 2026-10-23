@@ -217,5 +217,28 @@ refused any tile over 6144. The research turned up more than the reference had:
   from about 72 Hz, 6144 × 2160 from 90 Hz. The UI says so ("Can't build this") rather
   than writing a wrapped clock. Every rate anyone reports bonding is under that.
 
+**4:2:2 is costed per link since 2026-10-24.** `bitsPerPixel` had returned 16 for 4:2:2
+at every depth, on a comment that also said it "costs the same as 8-bit 4:4:4" (24).
+Both were half right. HDMI carries 4:2:2 in a 12-bit container, so it is 24 bits per
+pixel at any depth, and TMDS was already right because it charges the character rate,
+not bits. DisplayPort carries it at 2 x bpc, so 16, 20 or 24. Sources are in AGENTS.md
+(AMD's FRL capacity computation and DP bandwidth check in the Linux kernel). So FRL
+understated every 4:2:2 mode by a third, and DisplayPort understated 10- and 12-bit.
+The EDID builder's own copy of the FRL sum had the same 16 and now calls
+`bitsPerPixel(s, 'hdmi')`, so a 4:2:2 EDID states a higher Max_FRL_Rate where the mode
+needs one (2160p120: 40G, not 24G).
+
+Main's engine against the fix, over 23 devices, 1,195 CTA, DMT and CVT timings and 96
+signal settings (2,638,560 verdicts): 618 changed. All of them are 4:2:2 without DSC
+on the two NovaStar models, the only ports with an FRL budget or a DisplayPort link
+with no clock ceiling. Every other DP port has a 600 MHz ceiling, which binds first
+at 24 bpp. Per model: 159 go from the HDMI 2.1 card to unsupported (4:2:2 at 1.8 to
+2.6 GHz, 8K60 among them, now over 48G), 141 move from the DP 1.2 card to the HDMI 2.1
+card (10- and 12-bit at 720 MHz to 1.08 GHz), and 9 stay on the DP 1.2 card but are now
+within 2% of HBR2. On CVT-RB2 none of them is a row NovaStar list for that card. Nine
+are listed rows on standard or RB1 blanking (4096 × 2160 @60 12-bit on the DP 1.2 card,
+for one), where 8-bit 4:4:4, which NovaStar put in the same frame-rate cell, gets the
+same answer at the same timing.
+
 LivePremier Plus vendors the embed build, so a change here goes there too: `npm run
 build:embed`, commit `dist-embed/`, then its `npm run sync:otter-edid`.
