@@ -2,7 +2,7 @@
 > (Anthropic), directed and reviewed by a human author.
 > The timing engine is checked against published VESA DMT values and the DisplayID Type VII layout
 > against the Linux kernel's own parser. **No EDID this tool produced has ever been loaded into a
-> display, a source or a processor**, and the twenty-one-model compatibility table is vendor
+> display, a source or a processor**, and the twenty-three-model compatibility table is vendor
 > paperwork, cited per claim but never tried against the hardware it describes. Mosaic mode
 > reproduces another tool's Mac-tested files byte for byte, but Otter hasn't tested them itself.
 > Its macOS widths are the widest other people have reported, and **nobody has shown a Mac bonding
@@ -73,7 +73,7 @@ clock, raster, line rate and payload, and then the minimum HDMI version (1.0–1
 1.3/1.4, 2.0, or which FRL rate), the minimum DisplayPort rate at 4 and 2 lanes,
 and whether DVI needs one link or two.
 
-**Which hardware takes it.** Twenty-one models across Analog Way, Barco,
+**Which hardware takes it.** Twenty-three models across Analog Way, Barco,
 PixelHue, Brompton, NovaStar, disguise and Green Hippo, each answering yes /
 conditional / no, and where the answer is conditional, the capacity mode you
 have to configure to get it:

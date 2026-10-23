@@ -18296,12 +18296,28 @@ var DEVICES = [
 			{
 				id: "hdmi20x4",
 				label: "MX_4×HDMI 2.0 input card",
-				connectors: [HDMI_20(4, 6e8, 12)]
+				connectors: [{
+					...HDMI_20(4, 6e8, 12),
+					hdcp: [
+						"1.3",
+						"1.4",
+						"2.2",
+						"2.3"
+					]
+				}]
 			},
 			{
 				id: "dp12x4",
 				label: "MX_4×DP 1.2 input card",
-				connectors: [DP_12(4, 6e8, 12)]
+				connectors: [{
+					...DP_12(4, Number.POSITIVE_INFINITY, 12),
+					hdcp: [
+						"1.3",
+						"1.4",
+						"2.2",
+						"2.3"
+					]
+				}]
 			},
 			{
 				id: "hdmi21x2",
@@ -18320,6 +18336,7 @@ var DEVICES = [
 						"ycbcr420"
 					],
 					hdcp: [
+						"1.3",
 						"1.4",
 						"2.2",
 						"2.3"
@@ -18346,6 +18363,7 @@ var DEVICES = [
 						"ycbcr420"
 					],
 					hdcp: [
+						"1.3",
 						"1.4",
 						"2.2",
 						"2.3"
@@ -18372,6 +18390,7 @@ var DEVICES = [
 						"ycbcr420"
 					],
 					hdcp: [
+						"1.3",
 						"1.4",
 						"2.2",
 						"2.3"
@@ -18384,14 +18403,15 @@ var DEVICES = [
 		notes: [
 			"Card-based: two input slots. Each mode above is a card type, and the verdict names the card the mode needs.",
 			"4K cards (4×HDMI 2.0, 4×DP 1.2): 4096×2160 @60, or forced 8192×1080 @60. 8K cards (2×HDMI 2.1, 2×DP 1.4): forced 8192×4320 @30 on HDMI 2.1, 7680×4320 @30 or 8192×4320 @25 on DP 1.4.",
-			"The MX_1×DP 1.4 (8K@60Hz) card takes 7680×4320 @60, 12-bit 4:4:4 included. That cannot fit HBR3 uncompressed, so DSC is INFERRED — NovaStar never say DSC.",
+			"The MX_1×DP 1.4 (8K@60Hz) card takes 7680×4320 @60, 12-bit 4:4:4 included, and nothing wider than 7680 (a per-card width this verdict does not check). That cannot fit HBR3 uncompressed, so DSC is INFERRED — NovaStar never say DSC. Their 3840×2160 @240 on it fits only at a DSC target of 11 bpp or less.",
 			"HDMI 2.1 FRL rate is INFERRED as 48G: NovaStar list 8192×4320 @30 12-bit 4:4:4 on that card, and nothing slower carries it.",
+			"No pixel-clock ceiling on the DP cards is INFERRED from NovaStar stating none: the link budget (HBR2 on DP 1.2, HBR3 on DP 1.4) is the only limit applied. Their own table lists 4096×2160 @75 8-bit on the DP 1.2 card, about 700 MHz.",
 			"EDID presets reach only 3840×2160 @60 (7680×4320 @60 on the 8K@60 card); anything bigger is a custom EDID, which NovaStar say the cards accept.",
 			"Also 4×12G-SDI and ST 2110 cards, and a 1×DP 1.4 + 1×HDMI 2.1 card with the same per-port limits as the 2-port 8K cards. HDCP 2.3 on every HDMI and DP card. No interlaced input on HDMI or DP."
 		],
 		confidence: "documented",
 		citations: [{
-			claim: "2x input card slots. 4K cards 4×HDMI 2.0, 4×DP 1.2: max 4096×2160@60 or 8192×1080@60 (forced). 2×HDMI 2.1: max 8192×4320@30 (forced). 2×DP 1.4: max 7680×4320@30 (forced), 8192×4320@25. 1×DP 1.4 (8K@60Hz): max 7680×4320@60, 8/10/12-bit 4:4:4 to 60 Hz. Frame rates 23.98 to 240 Hz. HDCP 2.3. Video source table gives 12-bit, and 4:2:0 on HDMI 2.0, HDMI 2.1 and DP 1.4.",
+			claim: "2x input card slots. 4K cards 4×HDMI 2.0, 4×DP 1.2: max 4096×2160@60 or 8192×1080@60 (forced). 2×HDMI 2.1: max 8192×4320@30 (forced). 2×DP 1.4: max 7680×4320@30 (forced), 8192×4320@25. 1×DP 1.4 (8K@60Hz): max 7680×4320@60, max width 7680, 8/10/12-bit 4:4:4 to 60 Hz. Frame rates 23.98 to 240 Hz. HDCP 2.3, backwards compatible with 2.2/1.4/1.3. Video source table gives 12-bit, and 4:2:0 on HDMI 2.0, HDMI 2.1 and DP 1.4; its DP 1.2 rows include 4096×2160 and 3840×2160 @75 8-bit 4:4:4 (forced).",
 			source: "NovaStar — MX2000 Pro LED Display Controller Specifications V1.5.0 (2025-09-30), Input Card and Video Source Specifications",
 			url: "https://oss.novastar.tech/uploads/2025/09/MX2000-Pro-LED-Display-Controller-Specifications-V1.5.0.pdf",
 			read: "2026-10-23"
@@ -18426,7 +18446,7 @@ var DEVICES = [
 		],
 		capacityModes: [],
 		inheritsFrom: "novastar-mx2000pro",
-		notes: ["The MX2000 Pro’s input cards in a 6U chassis with eight input slots: up to 32x 4K@60, 16x 8K@30 or 8x 8K@60 inputs.", "Per-port limits, and the inferred DSC and FRL figures, are the MX2000 Pro’s. See that entry."],
+		notes: ["The MX2000 Pro’s input cards in a 6U chassis with eight input slots: up to 32x 4K@60, 16x 8K@30 or 8x 8K@60 inputs.", "Per-port limits, and the inferred DSC, FRL and DP clock figures, are the MX2000 Pro’s. See that entry."],
 		confidence: "documented",
 		citations: [{
 			claim: "8x input card slots taking the same card types as the MX2000 Pro (4×HDMI 2.0, 4×DP 1.2, 4×12G-SDI; 1×DP 1.4 (8K@60Hz), 2×HDMI 2.1, 2×DP 1.4, 1×DP 1.4 + 1×HDMI 2.1; ST 2110), with the same per-card resolution limits; up to 32x 4K@60Hz, 16x 8K@30Hz or 8x 8K@60Hz inputs.",

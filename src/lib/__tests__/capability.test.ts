@@ -5,10 +5,17 @@ import { DEFAULT_SIGNAL, dpRequirement, hdmiRequirement, dviRequirement } from '
 import { ctaByVic } from '../timing/cta.ts'
 import { cvtRb, cvtRb2 } from '../timing/cvt.ts'
 import type { SignalOptions } from '../link.ts'
+import type { Connector } from '../capability/types.ts'
+import type { Timing } from '../timing/types.ts'
 import { mosaicTiming, toTiming } from '../mosaic.ts'
 
 const sig = (o: Partial<SignalOptions> = {}): SignalOptions => ({ ...DEFAULT_SIGNAL, ...o })
 const dev = (id: string) => DEVICE_LIST.find((d) => d.id === id)!
+
+/** One connector judged on its own, in a device that has nothing else. */
+const port = (c: Connector, t: Timing, s: SignalOptions) =>
+  evaluateDevice({ ...dev('barco-ex'), capacityModes: [{ id: 'one', label: 'One', connectors: [c] }] }, t, s).modes[0]
+    .connectors[0]
 
 const p1080p60 = ctaByVic(16)!
 const p2160p60 = ctaByVic(97)!
@@ -29,6 +36,17 @@ describe('data integrity', () => {
         expect(c.claim.length, `${d.id}: empty claim`).toBeGreaterThan(20)
         expect(c.source.length, `${d.id}: empty source`).toBeGreaterThan(5)
         expect(c.read).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+      }
+    }
+  })
+
+  it('an FRL budget sits only on an HDMI 2.1 port', () => {
+    // Every other HDMI and DVI port is judged on TMDS alone, as before FRL existed.
+    for (const d of DEVICES) {
+      for (const c of d.capacityModes.flatMap((m) => m.connectors)) {
+        if (c.frlBps === undefined) continue
+        expect(c.kind, d.id).toBe('hdmi')
+        expect(c.label, d.id).toMatch(/2\.1/)
       }
     }
   })
@@ -207,7 +225,13 @@ describe('device verdicts', () => {
     // 4K60 is the 4K HDMI card's; the first mode that works wins.
     expect(evaluateDevice(dev('novastar-mx2000pro'), p2160p60, sig()).requiredMode!.id).toBe('hdmi20x4')
 
-    // NovaStar's forced 8192 x 4320 @30 12-bit 4:4:4 is 39.8 Gbps: past TMDS
+    // NovaStar list 3840 x 2160 @75 8-bit on the 4K DP card. At 658 MHz it is
+    // past HDMI 2.0, and a 600 MHz DP clock ceiling would have sent it to the
+    // 8K HDMI card instead. HBR2 carries it.
+    const uhd75 = cvtRb2(3840, 2160, { refreshHz: 75 })
+    expect(evaluateDevice(dev('novastar-mx2000pro'), uhd75, sig()).requiredMode!.id).toBe('dp12x4')
+
+    // NovaStar's forced 8192 x 4320 @30 12-bit 4:4:4 is 39.1 Gbps: past TMDS
     // and past HBR3, inside 48G FRL. Only the HDMI 2.1 card takes it.
     const eightK30 = cvtRb2(8192, 4320, { refreshHz: 30 })
     const v = evaluateDevice(dev('novastar-mx2000pro'), eightK30, sig({ bpc: 12 }))
@@ -224,6 +248,42 @@ describe('device verdicts', () => {
     const mx6000 = dev('novastar-mx6000pro')
     expect(mx6000.inheritsFrom).toBe('novastar-mx2000pro')
     expect(mx6000.capacityModes).toEqual(dev('novastar-mx2000pro').capacityModes)
+  })
+
+  it('an FRL port is judged on TMDS while TMDS carries the mode, and on FRL after', () => {
+    const hdmi21 = dev('novastar-mx2000pro').capacityModes.find((m) => m.id === 'hdmi21x2')!.connectors[0]
+
+    // 594 MHz fits TMDS, so the headroom is against the 600 MHz ceiling.
+    const uhd60 = port(hdmi21, p2160p60, sig())
+    expect(uhd60.ok).toBe(true)
+    expect(uhd60.headroom).toBeCloseTo(594 / 600, 3)
+
+    // 7680 x 4320 @60 12-bit is 74.5 Gbps, past 48G FRL as well, and the
+    // reason names FRL rather than a TMDS clock.
+    const over = port(hdmi21, cvtRb2(7680, 4320, { refreshHz: 60 }), sig({ bpc: 12 }))
+    expect(over.ok).toBe(false)
+    expect(over.reasons).toEqual(['needs 74.47 Gbps at 36 bpp, FRL carries 42.67 Gbps'])
+  })
+
+  it('DSC on HDMI needs both an FRL link and a decoder', () => {
+    const hdmi21 = dev('novastar-mx2000pro').capacityModes.find((m) => m.id === 'hdmi21x2')!.connectors[0]
+    const eightK60 = cvtRb2(7680, 4320, { refreshHz: 60 })
+    const dsc = sig({ dsc: true, dscTargetBpp: 12 })
+
+    // A decoder behind a TMDS-only port is no use: DSC never travels on TMDS.
+    const tmdsOnly = port({ ...hdmi21, frlBps: undefined, dsc: true }, eightK60, dsc)
+    expect(tmdsOnly.ok).toBe(false)
+    expect(tmdsOnly.reasons).toEqual(['DSC needs an FRL link; this connector is TMDS only'])
+
+    // The real HDMI 2.1 card has the link, but NovaStar document no DSC on it.
+    const noDecoder = port(hdmi21, eightK60, dsc)
+    expect(noDecoder.ok).toBe(false)
+    expect(noDecoder.reasons).toEqual(['no DSC support — the compressed stream cannot be decoded here'])
+
+    // Both, and the compressed stream is costed against FRL: 24.8 of 42.67 Gbps.
+    const both = port({ ...hdmi21, dsc: true }, eightK60, dsc)
+    expect(both.ok).toBe(true)
+    expect(both.headroom).toBeCloseTo(0.58, 2)
   })
 
   it('reports unknown rather than guessing where no capability is recorded', () => {
