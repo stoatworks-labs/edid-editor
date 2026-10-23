@@ -1,5 +1,5 @@
 import type { SignalOptions } from '../link.ts'
-import { bitsPerPixel, payloadBps, tmdsCharacterRateHz } from '../link.ts'
+import { FRL_EFFICIENCY, bitsPerPixel, payloadBps, tmdsCharacterRateHz } from '../link.ts'
 import type { Timing } from '../timing/types.ts'
 import { vFreq } from '../timing/types.ts'
 import type { CapacityMode, Connector, Device } from './types.ts'
@@ -67,7 +67,19 @@ function checkConnector(c: Connector, t: Timing, s: SignalOptions): ConnectorVer
 
   if (c.kind === 'hdmi' || c.kind === 'dvi') {
     const rate = tmdsCharacterRateHz(t, s)
-    if (!Number.isFinite(rate)) {
+    const fitsTmds = Number.isFinite(rate) && rate <= c.maxPixelClockHz
+    if (c.frlBps && !fitsTmds) {
+      // An HDMI 2.1 port moves to FRL when TMDS runs out, and FRL is a
+      // payload budget, not a character rate.
+      const capacity = c.frlBps * FRL_EFFICIENCY
+      const payload = payloadBps(t, s)
+      headroom = payload / capacity
+      if (payload > capacity) {
+        reasons.push(
+          `needs ${(payload / 1e9).toFixed(2)} Gbps at ${bitsPerPixel(s)} bpp, FRL carries ${(capacity / 1e9).toFixed(2)} Gbps`,
+        )
+      }
+    } else if (!Number.isFinite(rate)) {
       reasons.push('DSC needs an FRL link; this connector is TMDS only')
       headroom = 1
     } else {

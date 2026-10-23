@@ -203,6 +203,29 @@ describe('device verdicts', () => {
     expect(aq.warnings.join(' ')).toMatch(/exceeds the documented 144 Hz/)
   })
 
+  it('an MX2000 Pro names the input card a mode needs', () => {
+    // 4K60 is the 4K HDMI card's; the first mode that works wins.
+    expect(evaluateDevice(dev('novastar-mx2000pro'), p2160p60, sig()).requiredMode!.id).toBe('hdmi20x4')
+
+    // NovaStar's forced 8192 x 4320 @30 12-bit 4:4:4 is 39.8 Gbps: past TMDS
+    // and past HBR3, inside 48G FRL. Only the HDMI 2.1 card takes it.
+    const eightK30 = cvtRb2(8192, 4320, { refreshHz: 30 })
+    const v = evaluateDevice(dev('novastar-mx2000pro'), eightK30, sig({ bpc: 12 }))
+    expect(v.status).toBe('supported')
+    expect(v.requiredMode!.id).toBe('hdmi21x2')
+
+    // 8K60 does not fit HBR3 uncompressed; with DSC only the 8K@60 card decodes it.
+    const eightK60 = cvtRb2(7680, 4320, { refreshHz: 60 })
+    expect(evaluateDevice(dev('novastar-mx2000pro'), eightK60, sig()).status).toBe('unsupported')
+    expect(evaluateDevice(dev('novastar-mx2000pro'), eightK60, sig({ dsc: true })).requiredMode!.id).toBe('dp14-8k60')
+  })
+
+  it('an MX6000 Pro is the MX2000 Pro’s cards, by explicit pointer', () => {
+    const mx6000 = dev('novastar-mx6000pro')
+    expect(mx6000.inheritsFrom).toBe('novastar-mx2000pro')
+    expect(mx6000.capacityModes).toEqual(dev('novastar-mx2000pro').capacityModes)
+  })
+
   it('reports unknown rather than guessing where no capability is recorded', () => {
     const v = evaluateDevice({ ...dev('barco-ex'), capacityModes: [] }, p1080p60, sig())
     expect(v.status).toBe('unknown')

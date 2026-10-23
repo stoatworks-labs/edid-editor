@@ -107,7 +107,7 @@ export interface HdmiVersion {
 }
 
 /** 16b/18b line coding on FRL: 16 payload bits per 18 on the wire. */
-const FRL_EFFICIENCY = 16 / 18
+export const FRL_EFFICIENCY = 16 / 18
 
 export const HDMI_VERSIONS: HdmiVersion[] = [
   { name: 'HDMI 1.0–1.2', maxTmdsHz: 165e6, frlBps: 0, frlRate: 0, lanes: 3 },
