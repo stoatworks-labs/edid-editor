@@ -1,14 +1,20 @@
 # Cloudflare deployment for EDID Editor.
 #
 # A static-assets-only Worker: no server code, same shape as blend-calc and
-# test-card. Cloudflare runs the Vite build, so dist/ stays out of git. Set the
-# build command in the Cloudflare project to:
-#
-#   npm ci && npm run build
+# test-card. .github/workflows/deploy.yml runs the Vite build and deploys on
+# every push to main, so dist/ stays out of git.
 #
 # public/_headers is copied into dist/ by Vite and carries the CSP; the assets
 # runtime honours it. `npm run preview` does NOT apply it — use
 # `npm run serve:dist` to test the CSP for real.
+#
+# A ROUTE, not a custom domain. stoatworks-labs.com is at Cloudflare's limit of 100
+# Workers custom domains per zone (error 100122), so `custom_domain = true` would
+# upload a Worker that nothing serves. A route has no such limit but needs a proxied
+# DNS record to exist first, which wrangler does not create: `edid-editor` is an
+# AAAA 100:: record, proxied, made through the API on 2026-10-24. Delete that record
+# and this page goes dark with a green deploy. (The old address, in redirect/, kept
+# the custom domain it already had.)
 
 name = "edid-editor"
 compatibility_date = "2026-08-20"
@@ -17,5 +23,5 @@ compatibility_date = "2026-08-20"
 directory = "./dist"
 
 [[routes]]
-pattern = "edid-editor.stoatworks-labs.com"
-custom_domain = true
+pattern = "edid-editor.stoatworks-labs.com/*"
+zone_name = "stoatworks-labs.com"

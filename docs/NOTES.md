@@ -15,8 +15,8 @@ SPA, MIT, v0.1.0, created 2026-08-20. Same shape as the browser-tool family
 no backend, Cloudflare static-assets Worker, `edid-editor.stoatworks-labs.com` in
 `wrangler.toml`. **PUBLIC and LIVE since 2026-08-20**: `github.com/stoatworks-labs/edid-editor`
 (MIT, branch `main`) and **https://edid-editor.stoatworks-labs.com** — a
-static-assets Worker with the custom domain declared in `wrangler.toml`, so a
-fresh deploy cannot come up without the hostname. Listed on the website as a
+static-assets Worker on a route (see the rename below for why not a custom
+domain). Listed on the website as a
 **beta** on `/software/edid-editor` and `/web-tools` (position 08, Video
 group).
 
@@ -37,6 +37,13 @@ the caches, moves open tabs to the new address and unregisters. Two things kept 
 old name on purpose: the mosaic topology product id `0x4F54` ("OT"), so the rename
 changed no EDID bytes, and the old `ghcr.io/…/otter-edid-editor` package, which now
 stops getting new builds.
+
+**The new address is a route, not a custom domain.** The first deploy uploaded the
+Worker and then failed on its trigger with a bare 403. The API's own answer (PUT
+`/workers/scripts/edid-editor/domains/records`) was error 100122: stoatworks-labs.com
+already holds Cloudflare's limit of 100 Workers custom domains. So it's a route with a
+proxied AAAA `100::` record made through the API, the way cosplay has been since
+2026-09-29. wrangler doesn't make that record, and a deploy goes green without it.
 
 **Two modes + two answers.** Simple mode: resolution + rate + name → a whole
 EDID 1.4. Advanced mode: every field, incl. CTA-861 and DisplayID 2.0. Right
