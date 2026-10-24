@@ -1,6 +1,6 @@
 # Build the site and put it in front of visitors.
 #
-# Until this existed, otter-edid-editor shipped only when somebody remembered to run
+# Until this existed, edid-editor shipped only when somebody remembered to run
 # `cf-run npx wrangler deploy` from a laptop. That last happened on 2026-08-22, leaving 12 commits unserved by 2026-09-07.
 #
 # Deliberately the same shape as the rest of the fleet's deploy.yml, so a fix to
@@ -51,7 +51,7 @@ jobs:
             echo "::error::site cannot be deployed. Create a Cloudflare API token with"
             echo "::error::the 'Edit Cloudflare Workers' template scoped to this account,"
             echo "::error::then:"
-            echo "::error::  gh secret set CLOUDFLARE_API_TOKEN --repo stoatworks-labs/otter-edid-editor"
+            echo "::error::  gh secret set CLOUDFLARE_API_TOKEN --repo stoatworks-labs/edid-editor"
             echo "::error::cf-run already uses such a token from the login keychain under"
             echo "::error::the service name 'stoatworks-cloudflare'; the same one works here."
             exit 1
@@ -103,7 +103,7 @@ jobs:
                  | grep -vF '__CF$cv$params' | shasum -a 256 | cut -d' ' -f1)
           echo "expecting the live <head> to hash to $want"
           for attempt in 1 2 3 4 5; do
-            got=$(curl -sS --max-time 30 "https://otter-edid.stoatworks-labs.com/" \
+            got=$(curl -sS --max-time 30 "https://edid-editor.stoatworks-labs.com/" \
                   | sed -n '1,/<\/head>/p' | grep -vF '__CF$cv$params' \
                   | shasum -a 256 | cut -d' ' -f1 || true)
             if [ "$got" = "$want" ]; then
@@ -113,8 +113,42 @@ jobs:
             echo "not there yet, got $got — retrying in 10s (attempt $attempt)"
             sleep 10
           done
-          echo "::error::Deployed, but https://otter-edid.stoatworks-labs.com/ is still not serving this"
+          echo "::error::Deployed, but https://edid-editor.stoatworks-labs.com/ is still not serving this"
           echo "::error::build's <head>. The upload succeeded, so this is the edge"
           echo "::error::serving something else — check the Worker's routes, and that"
-          echo "::error::otter-edid-editor is what the custom domain actually points at."
+          echo "::error::edid-editor is what the custom domain actually points at."
+          exit 1
+
+      # The old address. This was Otter EDID Editor at otter-edid.stoatworks-labs.com
+      # until 2026-10-24; that domain now forwards here from its own small Worker in
+      # redirect/. It goes out after the site has proved itself live, so the old
+      # address never forwards to a domain that isn't serving yet. Deploying it on
+      # every push costs seconds and keeps it from drifting from the repo.
+      - name: Deploy the old address's redirect
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: "false"
+        run: npx --yes wrangler@4.116.0 deploy --config redirect/wrangler.toml
+
+      # A path and a query, because keeping both is the point of the redirect, and
+      # /sw.js, because that one must not redirect (see redirect/worker.js).
+      - name: Check the old address forwards
+        run: |
+          set -euo pipefail
+          old=https://otter-edid.stoatworks-labs.com
+          want="301 https://edid-editor.stoatworks-labs.com/a/b?c=d"
+          for attempt in 1 2 3 4 5; do
+            got=$(curl -sS -o /dev/null -w '%{http_code} %{redirect_url}' --max-time 30 \
+                  "$old/a/b?c=d" || true)
+            sw=$(curl -sS --max-time 30 "$old/sw.js" || true)
+            if [ "$got" = "$want" ] && printf '%s' "$sw" | grep -qF 'registration.unregister()'; then
+              echo "old address forwards, and /sw.js retires the old worker (attempt $attempt)"
+              exit 0
+            fi
+            echo "not there yet, got '$got' — retrying in 10s (attempt $attempt)"
+            sleep 10
+          done
+          echo "::error::$old is not forwarding as it should. Wanted '$want' for a"
+          echo "::error::path and query, and the retiring service worker at /sw.js."
           exit 1

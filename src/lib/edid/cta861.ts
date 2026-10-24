@@ -357,7 +357,7 @@ export function decodeCta(bytes: number[]): CtaExtension {
   const dtdOffset = bytes[2]
   // Offset 0 means "no detailed timings", NOT "timings start at byte 0". By
   // the spec it means no data blocks either, but blocks written behind a 0 are
-  // read anyway, up to the padding: Otter itself wrote VIC-only blocks that
+  // read anyway, up to the padding: the editor itself wrote VIC-only blocks that
   // way until 2026-10-24, and they should open to be fixed. decode.ts warns.
   const dbcEnd = dtdOffset === 0 ? 127 : dtdOffset
 

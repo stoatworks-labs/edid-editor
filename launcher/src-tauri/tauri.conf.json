@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Otter EDID Editor",
+  "productName": "EDID Editor",
   "version": "0.1.0",
-  "identifier": "com.allansargeant.otter-edid-editor",
+  "identifier": "com.allansargeant.edid-editor",
   "build": {
     "frontendDist": "../src"
   },
@@ -11,7 +11,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Otter EDID Editor",
+        "title": "EDID Editor",
         "width": 460,
         "height": 500,
         "resizable": false,

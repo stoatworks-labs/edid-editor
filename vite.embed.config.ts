@@ -29,7 +29,7 @@ export default defineConfig({
     lib: {
       entry: 'src/embed.tsx',
       formats: ['es'],
-      fileName: () => 'otter-edid-embed.js',
+      fileName: () => 'edid-editor-embed.js',
     },
   },
 })

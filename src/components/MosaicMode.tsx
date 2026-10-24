@@ -183,7 +183,7 @@ export function MosaicMode({
         </div>
         <div className="note">
           The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. Their base and CTA
-          blocks come from a real display’s EDID, because EDIDs built from scratch never bonded on a Mac. Nothing Otter builds elsewhere
+          blocks come from a real display’s EDID, because EDIDs built from scratch never bonded on a Mac. Nothing the editor builds elsewhere
           has been tried on hardware.
         </div>
       </Panel>

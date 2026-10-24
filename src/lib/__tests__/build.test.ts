@@ -186,7 +186,7 @@ describe('signal options reach the EDID', () => {
 })
 
 describe('the CTA block as Linux reads it', () => {
-  // Linux honours byte 2 strictly; Otter's own decoder does not, so every
+  // Linux honours byte 2 strictly; the editor's own decoder does not, so every
   // round trip above passed while VIC-only builds were unreadable there.
   const ctaBytes = (e: ReturnType<typeof buildEdid>['edid']) => [...encodeEdid(e).slice(128, 256)]
 
@@ -209,7 +209,7 @@ describe('the CTA block as Linux reads it', () => {
     expect(linuxHdmiVsdb(ctaBytes(edid))).toBeDefined()
   })
 
-  it('sees the same data blocks Otter does in every VIC build, and one with a DTD', () => {
+  it('sees the same data blocks the editor does in every VIC build, and one with a DTD', () => {
     const builds = CTA_TIMINGS.flatMap((t) =>
       (['rgb444', 'ycbcr444', 'ycbcr422', 'ycbcr420'] as const).flatMap((format) =>
         ([8, 10, 12] as const).map((bpc) =>

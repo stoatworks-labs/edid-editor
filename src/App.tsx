@@ -145,7 +145,7 @@ export default function App({ host }: { host?: EdidHost } = {}) {
   return (
     <div className="app">
       <header className="top">
-        <h1>Otter EDID Editor</h1>
+        <h1>EDID Editor</h1>
         <span className="tag">
           Build an EDID from a resolution, or edit every field — then see which processors will take it.
         </span>

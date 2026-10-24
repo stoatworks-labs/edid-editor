@@ -1,4 +1,4 @@
-# AGENTS.md — Otter EDID Editor
+# AGENTS.md — EDID Editor
 
 Onboarding for LLM agents and newcomers.
 
@@ -104,7 +104,7 @@ src/components/    UI only. No arithmetic lives here.
 - The CTA data block collection as Linux reads it: from byte 4 up to byte 2,
   and nothing at all when byte 2 is under 4 (`cea_db_collection_size` and
   `__cea_db_iter_current_block` in `drm_edid.c`, read 2026-10-24).
-  `__tests__/linux-cta.ts` reads every VIC build that way. Otter's own decoder
+  `__tests__/linux-cta.ts` reads every VIC build that way. The editor's own decoder
   is more forgiving, so a round trip alone never proved a sink would be read.
 - What 4:2:2 costs each link, against AMD's display code in the Linux kernel
   (`drivers/gpu/drm/amd/display/dc`, read 2026-10-24), not against the HDMI or
@@ -131,7 +131,7 @@ src/components/    UI only. No arithmetic lives here.
   bytes are well-formed and self-consistent; whether a given box likes them is
   untested. Mosaic mode is second-hand evidence only: identical bytes bonded on
   macOS 26 and 27 in the reference's testing, per its source comments (with a
-  different topology id — Otter's is SWK/0x4F54). The macOS widths are the
+  different topology id — the editor's is SWK/0x4F54). The macOS widths are the
   widest reported, not limits found, and none of them is ours: 6144 at 50/60 Hz
   before macOS 27 (the reference on 26, BetterDisplay users since Ventura);
   7680 at 30 Hz on M2 to M4 Max (BetterDisplay users, PixelHue; the chip list
@@ -177,12 +177,12 @@ npm test
 npm run build
 ```
 
-The dev server is registered in `~/.claude/launch.json` as `otter-edid-editor`
+The dev server is registered in `~/.claude/launch.json` as `edid-editor`
 on port 5199.
 
-LivePremier Plus vendors the editor from `dist-embed/otter-edid-embed.js`, which
+LivePremier Plus vendors the editor from `dist-embed/edid-editor-embed.js`, which
 is committed here. After a change under `src/`, run `npm run build:embed` and
-commit `dist-embed/` with it, then `npm run sync:otter-edid -- <this checkout>`
+commit `dist-embed/` with it, then `npm run sync:edid-editor -- <this checkout>`
 in livepremier-plus.
 
 ## Notes

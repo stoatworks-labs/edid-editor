@@ -1,12 +1,12 @@
-# Otter EDID Editor user guide
+# EDID Editor user guide
 
-Otter EDID Editor is a browser EDID editor for event video. Build an EDID from a resolution and a
+EDID Editor is a browser EDID editor for event video. Build an EDID from a resolution and a
 refresh rate, or edit every field by hand, then see which processors will actually take it, and in
 which mode.
 
 Nothing's uploaded. There's no backend to upload it to.
 
-![The editor with the mode cost and the hardware verdicts](screenshots/otter-edid-editor.png)
+![The editor with the mode cost and the hardware verdicts](screenshots/edid-editor.png)
 
 > **Before you rely on this:** the timing engine is checked against published VESA DMT values, and
 > the DisplayID layout against the Linux kernel's own parser.
@@ -16,7 +16,7 @@ Nothing's uploaded. There's no backend to upload it to.
 > shortlist.
 >
 > Mosaic mode's macOS widths are the widest other people have reported, not limits anyone has
-> found. **Nobody has shown a Mac bonding a plug wider than 6144**, though Otter will build one.
+> found. **Nobody has shown a Mac bonding a plug wider than 6144**, though the editor will build one.
 >
 > Built with AI assistance, directed and reviewed by a human author.
 
@@ -44,18 +44,18 @@ tear. If the Mac lists the plugs as separate displays, they haven't bonded and a
   reported at **30 Hz** on M2 to M4 Max (which chips manage it is inferred from who reported it).
 - On **macOS 27** the reference files bonded two 6144 plugs, **12288** wide. That was the Barco E3's
   ceiling in the test, not macOS's, so nobody knows yet how far 27 goes.
-- **6144** is the widest plug anyone has shown bonding. Otter builds wider ones with a warning, so
+- **6144** is the widest plug anyone has shown bonding. The editor builds wider ones with a warning, so
   you can try a 2 × 8192, but don't promise it to anyone until you have. Three or four across never
   bonds on a Mac.
-- Otter warns when a plug's pixel clock goes past **600 MHz**, the most the copied range-limits
+- The editor warns when a plug's pixel clock goes past **600 MHz**, the most the copied range-limits
   descriptor allows (12288 × 2160 at 60 needs 840 MHz a plug), and when its line rate goes past
   **255 kHz**, the same descriptor's other ceiling (3840 × 4320 plugs at 60 Hz). Whether a Mac
   minds either is untested.
 - A second mosaic on the same Mac needs a different **mosaic number**, because the Mac groups plugs by it.
 
-The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. Otter hasn't
+The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. The editor hasn't
 loaded its own files into a Mac. The one exception is a plug taller than 4095 lines: the reference's
-fallback mode in the base block wraps there, so Otter halves its height instead.
+fallback mode in the base block wraps there, so the editor halves its height instead.
 
 All three modes name the EDID, and all three show the same two answers on the right.
 

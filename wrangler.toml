@@ -1,4 +1,4 @@
-# Cloudflare deployment for Otter EDID Editor.
+# Cloudflare deployment for EDID Editor.
 #
 # A static-assets-only Worker: no server code, same shape as blend-calc and
 # test-card. Cloudflare runs the Vite build, so dist/ stays out of git. Set the
@@ -10,12 +10,12 @@
 # runtime honours it. `npm run preview` does NOT apply it — use
 # `npm run serve:dist` to test the CSP for real.
 
-name = "otter-edid-editor"
+name = "edid-editor"
 compatibility_date = "2026-08-20"
 
 [assets]
 directory = "./dist"
 
 [[routes]]
-pattern = "otter-edid.stoatworks-labs.com"
+pattern = "edid-editor.stoatworks-labs.com"
 custom_domain = true

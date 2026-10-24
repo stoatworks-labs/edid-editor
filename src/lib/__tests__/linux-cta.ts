@@ -1,12 +1,12 @@
 /**
- * A CTA extension's data blocks as Linux finds them, not as Otter's own decoder
+ * A CTA extension's data blocks as Linux finds them, not as the editor's own decoder
  * does. From `drivers/gpu/drm/drm_edid.c` at torvalds/linux 4da9ded, read
  * 2026-10-24: only revision 3 and later has a collection
  * (`__cea_db_iter_edid_next`); it runs from byte 4 up to byte 2, `d`, and is
  * empty when d < 4 (`cea_db_collection_size`); and reading stops at a block that
  * would run past d (`__cea_db_iter_current_block`).
  *
- * Otter's decoder reads blocks behind d = 0 all the way to the padding, which is
+ * The editor's decoder reads blocks behind d = 0 all the way to the padding, which is
  * why its round trips passed while every VIC-only build was unreadable here.
  */
 export function linuxDataBlocks(cta: ArrayLike<number>): number[][] {

@@ -15253,7 +15253,7 @@ function SimpleMode({ req, onChange, onBuild, notes }) {
 *
 * This reproduces a reference tiled-EDID builder BYTE FOR BYTE — a test pins
 * it against that builder's own output. The point of copying rather than
-* composing from Otter's own encoder is that the reference's files have
+* composing from the editor's own encoder is that the reference's files have
 * bonded on real Macs (macOS 26 and 27) and synthetic ones did not:
 *
 *   The base and CTA blocks are a PixelHue Q8's EDID verbatim, patched only
@@ -15263,7 +15263,7 @@ function SimpleMode({ req, onChange, onBuild, notes }) {
 *   Mac was ever seen bonding on those files.
 *
 * Nobody isolated WHICH reference bytes matter, so none of them are "tidied".
-* Otter's own CTA encoder does not reproduce this CTA block byte for byte,
+* The editor's own CTA encoder does not reproduce this CTA block byte for byte,
 * which is why a mosaic is carried as raw bytes and never re-encoded.
 *
 * Layout, 384 bytes per tile:
@@ -15279,7 +15279,7 @@ var reference = null;
 var ref = () => reference ??= Uint8Array.from(atob(REFERENCE_B64), (c) => c.charCodeAt(0));
 /**
 * The widest anyone has reported bonding, from the reference's bench testing
-* and other people's field reports (read 2026-10-20). Not Otter's own tests,
+* and other people's field reports (read 2026-10-20). Not the editor's own tests,
 * and on macOS 27 nobody has found the edge yet.
 *
 *   6144   the widest canvas reported at 50 or 60 Hz before macOS 27: the
@@ -16104,7 +16104,7 @@ function MosaicMode({ req, onChange, result, errors, selected, onSelect }) {
 				children: "Each plug gets its own EDID. All of them carry a DisplayID Tiled Display Topology block with the same id and grid, and each one’s own position. A Mac that reads matching blocks on several connectors joins them into a single display. It then drives the outputs as one, so they stay frame synced with no tearing at the seams."
 			}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 				className: "note",
-				children: "The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. Their base and CTA blocks come from a real display’s EDID, because EDIDs built from scratch never bonded on a Mac. Nothing Otter builds elsewhere has been tried on hardware."
+				children: "The layout copies, byte for byte, reference files that have bonded on macOS 26 and 27. Their base and CTA blocks come from a real display’s EDID, because EDIDs built from scratch never bonded on a Mac. Nothing the editor builds elsewhere has been tried on hardware."
 			})]
 		})
 	] });
@@ -19263,7 +19263,7 @@ function App({ host } = {}) {
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
 				className: "top",
 				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "Otter EDID Editor" }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "EDID Editor" }),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 						className: "tag",
 						children: "Build an EDID from a resolution, or edit every field — then see which processors will take it."
@@ -19459,7 +19459,7 @@ var styles_default = ":root {\n  --bg: #12151a;\n  --panel: #1a1f27;\n  --panel-
 /**
 * The editor as a module another application embeds.
 *
-* `npm run build:embed` makes `dist-embed/otter-edid-embed.js` from this: one
+* `npm run build:embed` makes `dist-embed/edid-editor-embed.js` from this: one
 * dependency-free ES module — React, the stylesheet and the library inside it —
 * that a host with no build step of its own can copy in and import. LivePremier
 * Plus is the first: it vendors the file, mounts the editor in a window beside
@@ -19476,7 +19476,7 @@ var styles_default = ":root {\n  --bg: #12151a;\n  --panel: #1a1f27;\n  --panel-
 * the editor's own (a popped-out window), not into somebody else's page.
 */
 var version = "v0.1.0";
-var STYLE_ID = "otter-edid-embed-css";
+var STYLE_ID = "edid-editor-embed-css";
 /** Put the editor in `el`. Returns a function that takes it out again. */
 function mount(el, host) {
 	const doc = el.ownerDocument;

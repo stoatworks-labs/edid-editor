@@ -273,7 +273,7 @@ describe('zip of the set', () => {
     const { mkdtempSync, writeFileSync, readFileSync } = await import('node:fs')
     const { join } = await import('node:path')
     const { tmpdir } = await import('node:os')
-    const dir = mkdtempSync(join(tmpdir(), 'otter-zip-'))
+    const dir = mkdtempSync(join(tmpdir(), 'edid-editor-zip-'))
     writeFileSync(join(dir, 'set.zip'), z)
     execFileSync('unzip', ['-q', join(dir, 'set.zip'), '-d', join(dir, 'out')])
     for (const t of r.tiles) expect(hex(new Uint8Array(readFileSync(join(dir, 'out', t.file))))).toBe(hex(t.bytes))

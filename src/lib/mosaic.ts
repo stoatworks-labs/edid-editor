@@ -12,7 +12,7 @@ import { encodeTiledTopology, encodeType1Timing } from './edid/displayid.ts'
  *
  * This reproduces a reference tiled-EDID builder BYTE FOR BYTE — a test pins
  * it against that builder's own output. The point of copying rather than
- * composing from Otter's own encoder is that the reference's files have
+ * composing from the editor's own encoder is that the reference's files have
  * bonded on real Macs (macOS 26 and 27) and synthetic ones did not:
  *
  *   The base and CTA blocks are a PixelHue Q8's EDID verbatim, patched only
@@ -22,7 +22,7 @@ import { encodeTiledTopology, encodeType1Timing } from './edid/displayid.ts'
  *   Mac was ever seen bonding on those files.
  *
  * Nobody isolated WHICH reference bytes matter, so none of them are "tidied".
- * Otter's own CTA encoder does not reproduce this CTA block byte for byte,
+ * The editor's own CTA encoder does not reproduce this CTA block byte for byte,
  * which is why a mosaic is carried as raw bytes and never re-encoded.
  *
  * Layout, 384 bytes per tile:
@@ -43,7 +43,7 @@ const ref = () => (reference ??= Uint8Array.from(atob(REFERENCE_B64), (c) => c.c
 
 /**
  * The widest anyone has reported bonding, from the reference's bench testing
- * and other people's field reports (read 2026-10-20). Not Otter's own tests,
+ * and other people's field reports (read 2026-10-20). Not the editor's own tests,
  * and on macOS 27 nobody has found the edge yet.
  *
  *   6144   the widest canvas reported at 50 or 60 Hz before macOS 27: the
@@ -104,7 +104,8 @@ export const DEFAULT_MOSAIC: MosaicRequest = {
   name: 'Mosaic',
   bitDepth: 10,
   // Stoatworks Labs. SWK is unassigned in the UEFI PNP registry (checked
-  // 2026-09-23); 0x4F54 is "OT", for Otter. The bonded reference files carried
+  // 2026-09-23); 0x4F54 is "OT", for Otter, the editor's first name, kept so that the rename
+  // (2026-10-24) changed no bytes. The bonded reference files carried
   // a different id — nothing suggests the Mac cares which, but this one is
   // untested.
   vendor: 'SWK',
@@ -115,7 +116,7 @@ export const DEFAULT_MOSAIC: MosaicRequest = {
 /**
  * The reference's timing: fixed 160-pixel horizontal blanking (48/32/80), VFP 3,
  * VSync 10, and at least 460 µs of vertical blanking. Close to CVT-RB but NOT
- * CVT-RB, and deliberately not swapped for Otter's CVT engine: these are the
+ * CVT-RB, and deliberately not swapped for the editor's CVT engine: these are the
  * timings the bonded files carried. The clock is rounded to 10 kHz, the unit
  * both descriptors store.
  */

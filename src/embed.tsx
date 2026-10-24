@@ -1,7 +1,7 @@
 /**
  * The editor as a module another application embeds.
  *
- * `npm run build:embed` makes `dist-embed/otter-edid-embed.js` from this: one
+ * `npm run build:embed` makes `dist-embed/edid-editor-embed.js` from this: one
  * dependency-free ES module — React, the stylesheet and the library inside it —
  * that a host with no build step of its own can copy in and import. LivePremier
  * Plus is the first: it vendors the file, mounts the editor in a window beside
@@ -36,7 +36,7 @@ export type { Timing } from './lib/timing/types.ts'
 
 export const version = __APP_VERSION__
 
-const STYLE_ID = 'otter-edid-embed-css'
+const STYLE_ID = 'edid-editor-embed-css'
 
 /** Put the editor in `el`. Returns a function that takes it out again. */
 export function mount(el: HTMLElement, host?: EdidHost): () => void {

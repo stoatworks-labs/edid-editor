@@ -4,14 +4,15 @@
 > against the Linux kernel's own parser. **No EDID this tool produced has ever been loaded into a
 > display, a source or a processor**, and the twenty-three-model compatibility table is vendor
 > paperwork, cited per claim but never tried against the hardware it describes. Mosaic mode
-> reproduces another tool's Mac-tested files byte for byte, but Otter hasn't tested them itself.
+> reproduces another tool's Mac-tested files byte for byte, but the editor hasn't tested them itself.
 > Its macOS widths are the widest other people have reported, and **nobody has shown a Mac bonding
-> a tile wider than 6144**, though Otter will build one. See
+> a tile wider than 6144**, though the editor will build one. See
 > [What is verified, and what is not](#what-is-verified-and-what-is-not).
 
-# Otter EDID Editor
+# EDID Editor
 
-**Live at [otter-edid.stoatworks-labs.com](https://otter-edid.stoatworks-labs.com)**, with nothing to install.
+**Live at [edid-editor.stoatworks-labs.com](https://edid-editor.stoatworks-labs.com)**, with nothing to install.
+It used to be Otter EDID Editor, at otter-edid.stoatworks-labs.com, and the old address forwards here.
 
 A browser EDID editor for event video. Build an EDID from a resolution and a
 refresh rate, or edit every field by hand, then see which processors will
@@ -19,7 +20,7 @@ actually take it, and in which mode.
 
 Nothing's uploaded. There's no backend to upload it to.
 
-![Otter EDID Editor building an 8192 × 1080 @ 60 EDID: the raster it needed, the signal cost, and the per-processor support table](docs/screenshots/otter-edid-editor.png)
+![EDID Editor building an 8192 × 1080 @ 60 EDID: the raster it needed, the signal cost, and the per-processor support table](docs/screenshots/edid-editor.png)
 
 <sub>An 8192 × 1080 @ 60 EDID built in Simple mode: the CVT-RB v2 raster it needed, a 551 MHz pixel clock that puts it past HDMI 1.4, the minimum interface per standard, and the per-processor table saying which will take it. Every row comes from the vendor's own documents, and none of it has been tried against hardware.</sub>
 
@@ -47,14 +48,14 @@ The widths it quotes are the widest anyone has reported bonding, which isn't the
 limit anyone has found. Before macOS 27 that's 6144 wide at 50 or 60 Hz, and 7680 at 30 Hz on
 M2 to M4 Max (which chips manage it is inferred from who reported it). On macOS 27 the
 reference files bonded two 6144 tiles, 12288 wide, and stopped there because the Barco E3 in
-the test did, not macOS. Only 2 × 1 and 2 × 2 bond. Otter builds a tile wider than 6144 with a
+the test did, not macOS. Only 2 × 1 and 2 × 2 bond. The editor builds a tile wider than 6144 with a
 warning rather than refusing it, since nobody has shown a Mac bonding one and somebody ought to
 try. It also warns when a plug's clock goes past the 600 MHz that the copied range-limits
 descriptor allows: 12288 × 2160 at 60 needs 840 MHz a plug, and nobody knows yet whether a Mac
 minds. The same descriptor stops the line rate at 255 kHz, which two 3840 × 4320 plugs at 60 Hz
 go past, so that gets a warning too.
 
-The mosaic layout isn't Otter's invention. It reproduces, byte for byte, a
+The mosaic layout isn't the editor's invention. It reproduces, byte for byte, a
 reference builder whose files have bonded on macOS 26 and 27. Its base and CTA
 blocks are a real display's EDID, because EDIDs built from scratch never bonded
 (macOS, it turns out, has opinions).
@@ -119,7 +120,7 @@ been tried against any hardware. See `AGENTS.md` for the full breakdown.
 
 Mosaic mode is the one exception to "never on hardware", and only at second hand:
 its layout is byte-identical to reference files reported bonding on macOS 26 and
-27. Otter hasn't loaded its own files into a Mac. The macOS widths it quotes come
+27. The editor hasn't loaded its own files into a Mac. The macOS widths it quotes come
 from that testing and from other people's field reports (BetterDisplay users,
 PixelHue), not mine, and anything in them about particular chips is inferred.
 
@@ -131,23 +132,23 @@ MIT.
 <!-- selfhost:start -->
 ## Run your own copy
 
-Otter EDID Editor is a static page, so hosting it yourself is one container serving
+EDID Editor is a static page, so hosting it yourself is one container serving
 the built files — the same files the hosted copy serves, running somewhere that
 still works when the venue has no internet.
 
 **Docker.** The image is built by this repo's `docker.yml` workflow on every
-push and published as `ghcr.io/stoatworks-labs/otter-edid-editor`:
+push and published as `ghcr.io/stoatworks-labs/edid-editor`:
 
 ```bash
-docker run -d --name otter-edid-editor --restart unless-stopped -p 8529:80 ghcr.io/stoatworks-labs/otter-edid-editor:latest
+docker run -d --name edid-editor --restart unless-stopped -p 8529:80 ghcr.io/stoatworks-labs/edid-editor:latest
 ```
 
 Or `docker compose up -d` with the [`docker-compose.yml`](docker-compose.yml)
 in this repo, which maps the same port. Either way it is then at
 `http://localhost:8529/`.
 
-**Unraid.** Search Community Applications for *Otter EDID Editor* — the template is
-[`templates/otter-edid-editor.xml`](https://github.com/stoatworks-labs/stoatworks-unraid/blob/main/templates/otter-edid-editor.xml)
+**Unraid.** Search Community Applications for *EDID Editor* — the template is
+[`templates/edid-editor.xml`](https://github.com/stoatworks-labs/stoatworks-unraid/blob/main/templates/edid-editor.xml)
 in [stoatworks-unraid](https://github.com/stoatworks-labs/stoatworks-unraid), which is what the CA feed reads.
 
 **Stoatworks Burrow** lists it under *Self-hosted*, with the compose file a

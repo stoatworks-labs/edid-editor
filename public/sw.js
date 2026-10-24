@@ -23,7 +23,7 @@
 // bumping per deploy — the hashed filenames already handle that — and old
 // caches are deleted on activate, so a bump costs one cold fetch.
 
-const CACHE = 'otter-edid-v2';
+const CACHE = 'edid-editor-v2';
 
 // Enough to boot offline. Everything else arrives through runtime caching.
 //

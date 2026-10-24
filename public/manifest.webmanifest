@@ -1,6 +1,6 @@
 {
-  "name": "Otter EDID Editor",
-  "short_name": "Otter EDID",
+  "name": "EDID Editor",
+  "short_name": "EDID Editor",
   "description": "Build and edit EDIDs, and see which event processors will accept the mode.",
   "start_url": "/",
   "scope": "/",

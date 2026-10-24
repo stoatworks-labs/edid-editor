@@ -404,7 +404,7 @@ describe('base block fields', () => {
     e.standardTimings[1] = { hActive: 1280, aspect: '4:3', refreshHz: 75 }
     e.descriptors = [
       dtdOf(cvtRb(1920, 1080, { refreshHz: 60 })),
-      { kind: 'name', text: 'Otter Test' },
+      { kind: 'name', text: 'Editor Test' },
       {
         kind: 'range',
         minVerticalHz: 24,
@@ -438,7 +438,7 @@ describe('base block fields', () => {
     expect(edid.standardTimings[0]).toEqual({ hActive: 1920, aspect: '16:9', refreshHz: 60 })
     expect(edid.standardTimings[1]).toEqual({ hActive: 1280, aspect: '4:3', refreshHz: 75 })
     expect(edid.standardTimings[2]).toBeNull()
-    expect(edid.descriptors[1]).toEqual({ kind: 'name', text: 'Otter Test' })
+    expect(edid.descriptors[1]).toEqual({ kind: 'name', text: 'Editor Test' })
 
     const range = edid.descriptors[2] as { kind: 'range'; maxPixelClockMHz: number; cvt?: { maxActivePixelsPerLine: number } }
     expect(range.maxPixelClockMHz).toBe(600)

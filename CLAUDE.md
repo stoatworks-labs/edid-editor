@@ -1,4 +1,4 @@
-# Otter EDID Editor — command reference
+# EDID Editor — command reference
 
 See `AGENTS.md` for the mental model, invariants and what is actually verified.
 

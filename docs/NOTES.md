@@ -7,21 +7,36 @@ person and dated by when each thing was learned — that date is usually the use
 Cross-cutting notes that are not specific to this repo live in
 [fleet-notes](https://github.com/stoatworks-labs/fleet-notes).
 
-*Otter EDID Editor — browser EDID builder/editor with a cited per-model hardware support matrix; PUBLIC + LIVE as a beta, but no hardware has ever been fed one of its EDIDs*
+*EDID Editor — browser EDID builder/editor with a cited per-model hardware support matrix; PUBLIC + LIVE as a beta, but no hardware has ever been fed one of its EDIDs*
 
-**Otter EDID Editor** — `~/projects/video/otter-edid-editor`, React/TS/Vite static
+**EDID Editor** — `~/Projects/video/edid-editor`, React/TS/Vite static
 SPA, MIT, v0.1.0, created 2026-08-20. Same shape as the browser-tool family
 ([blend calc](https://github.com/stoatworks-labs/blend-calc/blob/main/docs/NOTES.md) (`blend-calc`), [aspect calc](https://github.com/stoatworks-labs/aspect-calc/blob/main/docs/NOTES.md) (`aspect-calc`), [test card](https://github.com/stoatworks-labs/test-card/blob/main/docs/NOTES.md) (`test-card`)):
-no backend, Cloudflare static-assets Worker, `otter.stoatworks-labs.com` in
-`wrangler.toml`. **PUBLIC and LIVE since 2026-08-20**: `github.com/stoatworks-labs/otter-edid-editor`
-(MIT, branch `main`) and **https://otter-edid.stoatworks-labs.com** — a
+no backend, Cloudflare static-assets Worker, `edid-editor.stoatworks-labs.com` in
+`wrangler.toml`. **PUBLIC and LIVE since 2026-08-20**: `github.com/stoatworks-labs/edid-editor`
+(MIT, branch `main`) and **https://edid-editor.stoatworks-labs.com** — a
 static-assets Worker with the custom domain declared in `wrangler.toml`, so a
 fresh deploy cannot come up without the hostname. Listed on the website as a
-**beta** on `/software/otter-edid-editor` and `/web-tools` (position 08, Video
+**beta** on `/software/edid-editor` and `/web-tools` (position 08, Video
 group).
 
 Named by Allan mid-build (was `edid-forge` for about an hour — any pre-rename
 path is dead).
+
+**Renamed from Otter EDID Editor on 2026-10-24**, at Allan's request ("a bit of an
+awkward naming thing"), before it had any release. Everything moved: the repo
+(`stoatworks-labs/otter-edid-editor`, which GitHub redirects), the folder, the
+Worker (`edid-editor`), the image (`ghcr.io/stoatworks-labs/edid-editor`), the
+bundle id, the website slug and LivePremier Plus's and openRCS's vendored
+`edid-editor-embed.js`. **The old address still works**: `redirect/` deploys a
+Worker under the old name, `otter-edid-editor`, which owns
+`otter-edid.stoatworks-labs.com` and 301s every path to the new one, keeping the
+query. Its `/sw.js` is not redirected (a service worker update check refuses a
+redirect, so the old worker would stay in charge); it serves a worker that clears
+the caches, moves open tabs to the new address and unregisters. Two things kept the
+old name on purpose: the mosaic topology product id `0x4F54` ("OT"), so the rename
+changed no EDID bytes, and the old `ghcr.io/…/otter-edid-editor` package, which now
+stops getting new builds.
 
 **Two modes + two answers.** Simple mode: resolution + rate + name → a whole
 EDID 1.4. Advanced mode: every field, incl. CTA-861 and DisplayID 2.0. Right
@@ -31,10 +46,10 @@ Brompton / NovaStar / disguise / Green Hippo.
 
 **Containerised 2026-08-20**: `fleet.json` `static-build` + `unraid.json`
 `hostPort` **8529**, public, in [stoatworks unraid](https://github.com/stoatworks-labs/stoatworks-unraid/blob/main/docs/NOTES.md) (`stoatworks-unraid`). Image
-`ghcr.io/stoatworks-labs/otter-edid-editor` built green and verified
+`ghcr.io/stoatworks-labs/edid-editor` built green and verified
 **anonymously pullable** (token + manifest GET — a green Actions run does not
 prove it). linux/amd64, matching the rest of the fleet. CA template live at
-`templates/otter-edid-editor.xml`. The generated Dockerfile runs `nginx -t`
+`templates/edid-editor.xml`. The generated Dockerfile runs `nginx -t`
 during the build, which is the only syntax check these configs get
 ([no container runtime](https://github.com/stoatworks-labs/fleet-notes/blob/main/notes/reference_no_container_runtime.md)).
 
@@ -55,7 +70,7 @@ blend-calc rather than reinvented. See [dependabot fleet config](https://github.
 **"Beta" on this site is carried in the tool's NAME, not its status.**
 `projects.json.statuses` has no `beta` tier, and an undeclared id falls through
 to the raw lowercase string with no `.status-*` colour. So: `status: "building"`
-plus `"name": "Otter EDID Editor (beta)"` / `"navLabel": "Otter EDID (beta)"` in
+plus `"name": "EDID Editor (beta)"` / `"navLabel": "EDID Editor (beta)"` in
 `webtools.json`, which is how the PLAY Flasher does it. ⚠️ **`burin` really does
 carry `status: "beta"` and therefore renders unstyled** — a latent bug, not a
 precedent to copy.
@@ -126,18 +141,18 @@ input plugs). Different thing; this is a standalone editor.
 **Mosaic mode landed 2026-09-23** — Allan asked for multi-plug tiled EDIDs so a Mac's
 outputs are frame synced, and pointed at a reference tiled-EDID builder Allan supplied (not
 named here by request). `src/lib/mosaic.ts` is **byte-identical** to it, pinned by
-fixtures generated by running the reference under node with Otter's id. What its
+fixtures generated by running the reference under node with the editor's id. What its
 source says it learned on the bench, and what this mode repeats:
 
 - **Only its reference base+CTA bonded.** A PixelHue Q8 EDID, patched in six places.
   The reference's first version synthesised base+CTA and no Mac ever bonded on those files. So
-  nothing in the reference is tidied, and Otter's own encoder never touches a tile —
+  nothing in the reference is tidied, and the editor's own encoder never touches a tile —
   its CTA encoder reordered data blocks, so a decode/encode of that block changed 88
   bytes (found while checking the round-trip, not by inspection; fixed the same
   day — see below — but the bypass stays).
 - **DisplayID 1.3, not 2.0.** Section version 0x12, a Type I timing (tag 0x03, 10 kHz
   clock) then Tiled Display (tag 0x12), section length declared as the full 121 with
-  zero padding. Otter's decoder now keeps that declared length (`sectionLength`) —
+  zero padding. The editor's decoder now keeps that declared length (`sectionLength`) —
   without it a round-trip shortened the section and moved three bytes.
 - **macOS limits:** a bonded canvas is up to 6144 wide on macOS 26, up to 12288 on 27
   (12288 is also the E3's DisplayID ceiling, so 27's real limit is unknown). Only
@@ -154,7 +169,7 @@ source says it learned on the bench, and what this mode repeats:
   UEFI PNP registry (`uefi.org/uefi-pnp-export`, a CSV). The reference used ATV — which
   the registry assigns to Office Depot. Untested whether the Mac cares.
 
-Still true: **Otter has not loaded any of these into a Mac itself.**
+Still true: **The editor has not loaded any of these into a Mac itself.**
 
 **A decoded CTA block saves back byte for byte since 2026-09-23.** The Q8 block broke
 the encoder two ways: its data blocks run video, audio, HDMI Forum VSDB, HDMI VSDB,
@@ -172,7 +187,7 @@ Also seen: the reference's base block claims two extensions (byte 126) for a 256
 blob, because mosaic appends the third; the encoder writes the count it has.
 
 **Mosaic widths re-read against field reports, 2026-10-20.** Someone asked through the
-feedback button whether an M5 could do 2 × 8192 × 2160 (stoatworks-triage#6), and Otter
+feedback button whether an M5 could do 2 × 8192 × 2160 (stoatworks-triage#6), and the editor
 refused any tile over 6144. The research turned up more than the reference had:
 
 - **6144 is the 50/60 Hz figure before macOS 27.** BetterDisplay discussion #713 has
@@ -188,7 +203,7 @@ refused any tile over 6144. The research turned up more than the reference had:
 - So `mosaicErrors` no longer refuses a wide tile. `checkMosaic` warns ("Nobody has
   shown a Mac bonding tiles 8192 wide") and a canvas past 12288 is a caveat, not a "no".
 - **New: a tile-clock warning.** The copied range-limits descriptor (`fd 00 17 f0 0f ff
-  3c`) says 600 MHz at most, and Otter had been building 12288 × 2160 @60 (840.45 MHz a
+  3c`) says 600 MHz at most, and the editor had been building 12288 × 2160 @60 (840.45 MHz a
   tile) and 2 × 8192 × 2160 @60 (1113.49) without a word. It warns past 600 now. The
   descriptor stays byte-identical, and the reference fixtures still pin it.
   2 × 8192 × 2160 @30 is 548.98 MHz, under the line.
@@ -202,7 +217,7 @@ refused any tile over 6144. The research turned up more than the reference had:
   stand-in DTD with its 12-bit height wrapped: 3840 × 224, and a 4096-tall tile 0 lines.
   The stand-in was only ever halved for width. The reference builder does exactly the
   same (it halves `sw` and never `sh`), so its bytes for tall tiles were never a tested
-  reference either, and none of the five fixture cases is taller than 2160. Otter now
+  reference either, and none of the five fixture cases is taller than 2160. The editor now
   halves the height too (3840 × 4320 → 3840 × 2160 at the same rate), and `baseDtd`
   throws rather than wrap if anything ever gets past it. The fixtures still match byte
   for byte. Refusing tall tiles was the other option, but that would have refused the
@@ -261,7 +276,7 @@ too big for a DTD (those go to DisplayID). CTA-861-H 7.3.3 says 0 means no timin
 no data blocks, and the readers agree: Linux's `cea_db_collection_size` returns 0 below 4,
 and edid-decode's `parse_cta_block` stops at an offset under 4. So Linux found no HDMI
 VSDB, no VICs and no Max_TMDS_Clock, and took the sink for DVI. That also undid the i915
-reasoning behind the TMDS ceiling fix above, for exactly the builds it was about. Otter's
+reasoning behind the TMDS ceiling fix above, for exactly the builds it was about. The editor's
 own decoder reads a 0 as "blocks run to the padding", which is why every round trip
 passed. Found while releasing LivePremier Plus v0.18.4, in its 1080p60 12-bit EDID:
 `02 03 00 b0 41 90 67 03 0c 00 10 00 38 2d`.
@@ -287,4 +302,4 @@ way. Through the embed's `edidForTiming`, every CTA and DMT table timing at 8, 1
 bpc: 144 of 219 changed the same way, 99 VIC-only and 45 with DisplayID.
 
 LivePremier Plus vendors the embed build, so a change here goes there too: `npm run
-build:embed`, commit `dist-embed/`, then its `npm run sync:otter-edid`.
+build:embed`, commit `dist-embed/`, then its `npm run sync:edid-editor`.

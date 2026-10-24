@@ -1,0 +1,18 @@
+# The old address, otter-edid.stoatworks-labs.com, forwarding to the new one.
+#
+# This Worker keeps the old name, otter-edid-editor, because that Worker already
+# owns the old custom domain. Deploying a script over it swaps the site for the
+# redirect in one step, and the domain never belongs to nobody in between. The
+# site itself now deploys as edid-editor, from the wrangler.toml at the top.
+#
+# deploy.yml deploys this on every push, after the site:
+#
+#   npx wrangler deploy --config redirect/wrangler.toml
+
+name = "otter-edid-editor"
+main = "worker.js"
+compatibility_date = "2026-08-20"
+
+[[routes]]
+pattern = "otter-edid.stoatworks-labs.com"
+custom_domain = true
