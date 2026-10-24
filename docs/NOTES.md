@@ -45,6 +45,17 @@ already holds Cloudflare's limit of 100 Workers custom domains. So it's a route 
 proxied AAAA `100::` record made through the API, the way cosplay has been since
 2026-09-29. wrangler doesn't make that record, and a deploy goes green without it.
 
+**The default manufacturer id became `SWK` the same day** (Allan's call, after the
+rename left `OTR` in every built EDID, where some devices show it as the maker).
+`blankEdid()` in `src/lib/edid/defaults.ts` feeds every build, so a before/after
+sweep of the same 335,104 Simple-mode requests as above found 328,704 builds
+changed (the other 6,400 refuse either way), each in exactly bytes 8, 9 (the
+id, now 0x4E 0xEB) and 127 (the base checksum), nothing else. All 171 embed
+`edidForTiming` builds (every CTA and DMT table timing at 8, 10 and 12 bpc) changed
+the same way. Mosaic tiles were SWK already and are byte-identical. An EDID built
+before still says OTR, and an imported or edited one keeps whatever id it had.
+SWK isn't in hwdata's copy of the PNP registry (2,557 ids, checked 2026-10-24).
+
 **Two modes + two answers.** Simple mode: resolution + rate + name → a whole
 EDID 1.4. Advanced mode: every field, incl. CTA-861 and DisplayID 2.0. Right
 column always shows (a) the minimum HDMI/DP/DVI version the mode needs and

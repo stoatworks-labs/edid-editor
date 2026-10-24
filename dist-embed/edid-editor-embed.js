@@ -12911,13 +12911,15 @@ function emptyCta() {
 /**
 * A blank EDID 1.4, digital, ready to have timings put in it.
 *
-* 'OTR' is not a registered PNP ID and is deliberately not one — this tool must
-* not stamp somebody else's registered manufacturer code onto a made-up EDID.
-* The UI says so where the field is edited.
+* 'SWK' is Stoatworks Labs', the same id the mosaic topology uses, and is not a
+* registered PNP ID (not in hwdata's copy of the registry, checked 2026-10-24):
+* this tool must not stamp somebody else's registered manufacturer code onto a
+* made-up EDID. The UI says so where the field is edited. Until 2026-10-24 it
+* was 'OTR', for the tool's old name, so an EDID built before then says OTR.
 */
 function blankEdid() {
 	return {
-		manufacturerId: "OTR",
+		manufacturerId: "SWK",
 		productCode: 1,
 		serialNumber: 1,
 		week: 1,

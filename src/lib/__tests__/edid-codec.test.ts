@@ -51,7 +51,7 @@ describe('manufacturer id', () => {
   })
 
   it('round-trips through the decoder', () => {
-    for (const id of ['ABC', 'ZZZ', 'AAA', 'OTR', 'DEL']) {
+    for (const id of ['ABC', 'ZZZ', 'AAA', 'SWK', 'DEL']) {
       const e = blankEdid()
       e.manufacturerId = id
       expect(decodeEdid(encodeEdid(e)).edid.manufacturerId).toBe(id)
@@ -494,7 +494,7 @@ describe('reading files', () => {
     bytes[127] = (bytes[127] + 1) & 0xff
     const { issues, edid } = decodeEdid(bytes)
     expect(issues.some((i) => i.severity === 'error' && /checksum/.test(i.message))).toBe(true)
-    expect(edid.manufacturerId).toBe('OTR') // still parsed
+    expect(edid.manufacturerId).toBe('SWK') // still parsed
   })
 
   it('accepts a hex dump in any of the usual shapings', () => {
@@ -511,7 +511,7 @@ describe('reading files', () => {
 
     for (const text of [hex, spaced, xxd]) {
       const r = parseEdidFile(text)
-      expect(r.edid.manufacturerId).toBe('OTR')
+      expect(r.edid.manufacturerId).toBe('SWK')
       expect(r.issues.filter((i) => i.severity === 'error')).toEqual([])
     }
   })
