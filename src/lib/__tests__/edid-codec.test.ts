@@ -8,6 +8,7 @@ import { decodeDtd } from '../edid/decode-dtd.ts'
 import { decodeType7Timing, encodeType7Timing } from '../edid/displayid.ts'
 import { ctaByVic } from '../timing/cta.ts'
 import { cvtRb } from '../timing/cvt.ts'
+import { linuxDataBlocks, linuxHdmiVsdb } from './linux-cta.ts'
 import type { CtaExtension, DetailedTimingDescriptor, DisplayIdExtension } from '../edid/types.ts'
 
 const dtdOf = (t: ReturnType<typeof cvtRb>): DetailedTimingDescriptor => ({
@@ -337,6 +338,57 @@ describe('decoding a real CTA block and saving it back', () => {
     expect(dataBlocks(reencode(ext))[0]).toEqual([0x62, 0xaa, 0xbb])
     ext.unknownBlocks = []
     expect(dataBlocks(reencode(ext)).map((b) => b[0] >> 5)).toEqual([2, 4])
+  })
+})
+
+describe('the data block offset, byte 2', () => {
+  // What a VIC-only build wrote before 2026-10-24, LivePremier Plus's 1080p60
+  // 12-bit among them: video, HDMI VSDB and colorimetry blocks behind a zero.
+  const legacy = () => {
+    const b = [0x02, 0x03, 0x00, 0xb0, 0x41, 0x90, 0x67, 0x03, 0x0c, 0x00, 0x10, 0x00, 0x38, 0x2d, 0xe3, 0x05, 0xc0, 0x00]
+    while (b.length < 127) b.push(0)
+    return [...b, checksum(b)]
+  }
+  const withCta = (cta: CtaExtension) => {
+    const e = blankEdid()
+    e.extensions.push(cta)
+    return encodeEdid(e)
+  }
+
+  it('is 4 plus the data blocks with or without timings, and 0 only when there is neither', () => {
+    const cta = emptyCta()
+    expect(reencode(cta)[2]).toBe(0)
+    cta.detailedTimings = [dtdOf(cvtRb(1920, 1080, { refreshHz: 60 }))]
+    expect(reencode(cta)[2]).toBe(4)
+    cta.videoDescriptors = [{ vic: 16, native: true }]
+    expect(reencode(cta)[2]).toBe(6)
+    cta.detailedTimings = []
+    expect(reencode(cta)[2]).toBe(6)
+    expect(linuxDataBlocks(reencode(cta))).toEqual([[0x41, 0x90]])
+  })
+
+  it('still reads an old block with data blocks behind a zero, and says Linux will not', () => {
+    expect(linuxDataBlocks(legacy())).toEqual([])
+    const { edid, issues } = decodeEdid(withCta(ctaOf(legacy())))
+    const got = edid.extensions[0] as CtaExtension
+    expect(got.videoDescriptors).toEqual([{ vic: 16, native: true }])
+    expect(got.hdmiVsdb!.maxTmdsClockMHz).toBe(225)
+    expect(got.colorimetry!.bt2020RGB).toBe(true)
+    expect(issues).toContainEqual(expect.objectContaining({ severity: 'warning', message: expect.stringMatching(/byte 2 is 0.*3 follow/) }))
+  })
+
+  it('does not warn about a zero on a block that really is empty', () => {
+    expect(decodeEdid(withCta(emptyCta())).issues).toEqual([])
+  })
+
+  it('saves an old block back unedited as it came, and fixes it on any edit', () => {
+    const ext = ctaOf(legacy())
+    expect(reencode(ext)).toEqual(legacy())
+    ext.basicAudio = true
+    const fixed = reencode(ext)
+    expect(fixed[2]).toBe(18)
+    expect(fixed.slice(4, 18)).toEqual(legacy().slice(4, 18))
+    expect(linuxHdmiVsdb(fixed)).toEqual({ maxTmdsClockMHz: 225 })
   })
 })
 

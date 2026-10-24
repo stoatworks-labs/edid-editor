@@ -12389,7 +12389,7 @@ function encodeCta(ext) {
 	const out = [
 		2,
 		ext.revision,
-		dtds.length ? dtdOffset : 0,
+		dtds.length || dbc.length ? dtdOffset : 0,
 		(ext.underscanIt ? 128 : 0) | (ext.basicAudio ? 64 : 0) | (ext.ycbcr444 ? 32 : 0) | (ext.ycbcr422 ? 16 : 0) | nativeDtds,
 		...dbc,
 		...dtds
@@ -12785,9 +12785,17 @@ function decodeEdid(data) {
 			message: `checksum is wrong (sums to ${s})`
 		});
 		switch (block[0]) {
-			case 2:
-				extensions.push(decodeCta(block));
+			case 2: {
+				const cta = decodeCta(block);
+				const blocks = cta.source?.blocks.length ?? 0;
+				if (block[2] === 0 && blocks) issues.push({
+					severity: "warning",
+					where: `extension ${i + 1}`,
+					message: `byte 2 is 0, which says there are no data blocks, but ${blocks} follow it: Linux and edid-decode skip them all, so a source sees no VICs and no HDMI block. Saved unedited it stays that way; any edit to this extension writes the right offset`
+				});
+				extensions.push(cta);
 				break;
+			}
 			case 112:
 				extensions.push(decodeDisplayId(block));
 				break;

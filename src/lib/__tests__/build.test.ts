@@ -4,8 +4,11 @@ import type { SimpleRequest } from '../build.ts'
 import { DEFAULT_SIGNAL } from '../link.ts'
 import { encodeEdid } from '../edid/encode.ts'
 import { decodeEdid } from '../edid/decode.ts'
+import { decodeCta } from '../edid/cta861.ts'
 import { primaryTiming } from '../primary.ts'
+import { CTA_TIMINGS } from '../timing/cta.ts'
 import { vFreq } from '../timing/types.ts'
+import { linuxDataBlocks, linuxHdmiVsdb } from './linux-cta.ts'
 import type { CtaExtension, DisplayIdExtension } from '../edid/types.ts'
 
 const req = (o: Partial<SimpleRequest> = {}): SimpleRequest => ({
@@ -179,6 +182,48 @@ describe('signal options reach the EDID', () => {
     expect(cta.hdmiVsdb!.deepColor30).toBe(true)
     expect(cta.hdmiVsdb!.deepColor36).toBe(true)
     expect(cta.hdmiVsdb!.deepColor48).toBe(false)
+  })
+})
+
+describe('the CTA block as Linux reads it', () => {
+  // Linux honours byte 2 strictly; Otter's own decoder does not, so every
+  // round trip above passed while VIC-only builds were unreadable there.
+  const ctaBytes = (e: ReturnType<typeof buildEdid>['edid']) => [...encodeEdid(e).slice(128, 256)]
+
+  it('finds the HDMI VSDB, the VIC and the TMDS ceiling in a VIC-only build', () => {
+    // 1080p60 12-bit is VIC 16 with no detailed timing in the CTA block. Until
+    // 2026-10-24 it went out as 02 03 00 b0 41 90 67 03 0c 00 10 00 38 2d, and
+    // byte 2's zero hid every block after it: a DVI sink with no VICs.
+    const cta = ctaBytes(buildEdid(req({ signal: { ...DEFAULT_SIGNAL, bpc: 12 } })).edid)
+    // Video (2 bytes), HDMI VSDB (8) and colorimetry (4): the timings would start at 18.
+    expect(cta.slice(0, 4)).toEqual([0x02, 0x03, 18, 0xb0])
+    expect(linuxDataBlocks(cta)[0]).toEqual([0x41, 0x90])
+    expect(linuxHdmiVsdb(cta)).toEqual({ maxTmdsClockMHz: 225 })
+    expect(cta.slice(18, 127).every((b) => b === 0)).toBe(true)
+  })
+
+  it('finds them in a build whose mode only a DisplayID block can hold', () => {
+    // No VIC and no DTD: the CTA block is data blocks alone, the same shape.
+    const { edid } = buildEdid(req({ hActive: 8192, vActive: 1080, signal: { ...DEFAULT_SIGNAL, bpc: 10 } }))
+    expect(edid.extensions.map((e) => e.kind)).toEqual(['cta', 'displayid'])
+    expect(linuxHdmiVsdb(ctaBytes(edid))).toBeDefined()
+  })
+
+  it('sees the same data blocks Otter does in every VIC build, and one with a DTD', () => {
+    const builds = CTA_TIMINGS.flatMap((t) =>
+      (['rgb444', 'ycbcr444', 'ycbcr422', 'ycbcr420'] as const).flatMap((format) =>
+        ([8, 10, 12] as const).map((bpc) =>
+          edidAroundTiming(t, { name: 'T', signal: { ...DEFAULT_SIGNAL, format, bpc }, standard: 'cta', vic: t.vic }).edid,
+        ),
+      ),
+    )
+    builds.push(buildEdid(req({ hActive: 2560, vActive: 1440, signal: { ...DEFAULT_SIGNAL, bpc: 10 } })).edid)
+    for (const e of builds) {
+      const cta = ctaBytes(e)
+      const ours = decodeCta(cta)
+      expect(linuxDataBlocks(cta)).toEqual(ours.source!.blocks.map((b) => b.bytes))
+      expect(linuxHdmiVsdb(cta)?.maxTmdsClockMHz).toBe(ours.hdmiVsdb!.maxTmdsClockMHz)
+    }
   })
 })
 

@@ -301,7 +301,13 @@ export function encodeCta(ext: CtaExtension): number[] {
   const out = [
     0x02,
     ext.revision,
-    dtds.length ? dtdOffset : 0,
+    // Byte 2 is where the timings start, and so where the data blocks end:
+    // it is owed whenever there are blocks, timings or not. Zero means no
+    // timings AND no data blocks (CTA-861-H 7.3.3), and Linux
+    // (`cea_db_collection_size`) and edid-decode read no blocks behind it, so
+    // a VIC-only block written with 0 reached a Linux source as a DVI sink.
+    // A block with neither keeps 0, the spec's own spelling of empty.
+    dtds.length || dbc.length ? dtdOffset : 0,
     (ext.underscanIt ? 0x80 : 0) |
       (ext.basicAudio ? 0x40 : 0) |
       (ext.ycbcr444 ? 0x20 : 0) |
@@ -349,7 +355,10 @@ export function decodeCta(bytes: number[]): CtaExtension {
   }
 
   const dtdOffset = bytes[2]
-  // Offset 0 means "no detailed timings", NOT "timings start at byte 0".
+  // Offset 0 means "no detailed timings", NOT "timings start at byte 0". By
+  // the spec it means no data blocks either, but blocks written behind a 0 are
+  // read anyway, up to the padding: Otter itself wrote VIC-only blocks that
+  // way until 2026-10-24, and they should open to be fixed. decode.ts warns.
   const dbcEnd = dtdOffset === 0 ? 127 : dtdOffset
 
   const read: { key: CtaBlockKey; bytes: number[] }[] = []

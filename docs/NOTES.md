@@ -254,5 +254,37 @@ builds (34 sizes, 11 rates, 5 standards, whole and 1000/1001, 96 signals), 106,5
 stated a ceiling below their own mode; none do now. 159,321 builds changed, nearly all
 by that one byte; 1,380 deep 4:2:2 builds also lost the Forum block.
 
+**The CTA block said "no data blocks" whenever it had no detailed timing, fixed the same
+day.** `encodeCta` wrote byte 2, the DTD offset, only when there were DTDs, so a CTA
+block of data blocks alone went out with d = 0. That is every VIC build, and every mode
+too big for a DTD (those go to DisplayID). CTA-861-H 7.3.3 says 0 means no timings *and*
+no data blocks, and the readers agree: Linux's `cea_db_collection_size` returns 0 below 4,
+and edid-decode's `parse_cta_block` stops at an offset under 4. So Linux found no HDMI
+VSDB, no VICs and no Max_TMDS_Clock, and took the sink for DVI. That also undid the i915
+reasoning behind the TMDS ceiling fix above, for exactly the builds it was about. Otter's
+own decoder reads a 0 as "blocks run to the padding", which is why every round trip
+passed. Found while releasing LivePremier Plus v0.18.4, in its 1080p60 12-bit EDID:
+`02 03 00 b0 41 90 67 03 0c 00 10 00 38 2d`.
+
+Byte 2 is now 4 plus the data blocks whenever there are any. A block with no blocks and
+no timings keeps 0, the spec's own way of saying empty. Linux reads that exactly as it
+would 4, byte 3's YCbCr and audio flags included (`drm_parse_cea_ext` reads byte 3 before
+it looks at d). edid-decode stops before byte 3 at a 0, but it is a checker, not a
+source, and no build is ever that empty: only a CTA block emptied by hand in advanced
+mode. The decoder still reads blocks behind a 0, so an old EDID opens
+and any edit to its CTA block fixes it, but it now warns. An unedited one still saves
+back byte for byte, 0 and all. `__tests__/linux-cta.ts` reads a CTA block the way Linux
+does (checked against `drm_edid.c` at 4da9ded), and the tests run every VIC through it at
+three depths and four formats.
+
+Over 335,104 simple-mode builds (34 sizes, 11 rates, all 7 standards, whole and
+1000/1001, 64 signals), 84,075 changed, in CTA byte 2 and the CTA checksum and nowhere
+else: 3,584 with only a CTA block (all of them VIC builds) and 80,491 that also carry a
+DisplayID block. Linux found no data blocks in
+any of them before and finds the HDMI VSDB in all of them now. The other 239,701 (a DTD
+in the CTA block, or no CTA block) are byte-identical, and 11,328 refuse to build either
+way. Through the embed's `edidForTiming`, every CTA and DMT table timing at 8, 10 and 12
+bpc: 144 of 219 changed the same way, 99 VIC-only and 45 with DisplayID.
+
 LivePremier Plus vendors the embed build, so a change here goes there too: `npm run
 build:embed`, commit `dist-embed/`, then its `npm run sync:otter-edid`.

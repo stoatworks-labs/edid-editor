@@ -101,6 +101,11 @@ src/components/    UI only. No arithmetic lives here.
   `drm_mode_displayid_detailed` in `drm_edid.c`), read 2026-08-20.
 - The Tiled Display Topology layout, including the high location/count bits in
   byte 3, against `drm_parse_tiled_block` (read 2026-09-23).
+- The CTA data block collection as Linux reads it: from byte 4 up to byte 2,
+  and nothing at all when byte 2 is under 4 (`cea_db_collection_size` and
+  `__cea_db_iter_current_block` in `drm_edid.c`, read 2026-10-24).
+  `__tests__/linux-cta.ts` reads every VIC build that way. Otter's own decoder
+  is more forgiving, so a round trip alone never proved a sink would be read.
 - What 4:2:2 costs each link, against AMD's display code in the Linux kernel
   (`drivers/gpu/drm/amd/display/dc`, read 2026-10-24), not against the HDMI or
   VESA specs, which nobody here has read. HDMI carries it in a 12-bit
@@ -118,7 +123,7 @@ src/components/    UI only. No arithmetic lives here.
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 139 tests.
+  fixture tile) saves back byte for byte when not edited. 146 tests.
 
 **Assumed, and NOT verified:**
 

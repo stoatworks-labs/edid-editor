@@ -219,9 +219,22 @@ export function decodeEdid(data: Uint8Array | number[]): DecodeResult {
       issues.push({ severity: 'error', where: `extension ${i + 1}`, message: `checksum is wrong (sums to ${s})` })
     }
     switch (block[0]) {
-      case 0x02:
-        extensions.push(decodeCta(block))
+      case 0x02: {
+        const cta = decodeCta(block)
+        const blocks = cta.source?.blocks.length ?? 0
+        if (block[2] === 0 && blocks) {
+          issues.push({
+            severity: 'warning',
+            where: `extension ${i + 1}`,
+            message:
+              `byte 2 is 0, which says there are no data blocks, but ${blocks} follow it: Linux and edid-decode ` +
+              'skip them all, so a source sees no VICs and no HDMI block. Saved unedited it stays that way; ' +
+              'any edit to this extension writes the right offset',
+          })
+        }
+        extensions.push(cta)
         break
+      }
       case 0x70:
         extensions.push(decodeDisplayId(block))
         break
