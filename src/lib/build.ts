@@ -2,7 +2,7 @@ import type { Edid, CtaExtension, DetailedTimingDescriptor, DisplayIdExtension }
 import { blankEdid, emptyCta } from './edid/defaults.ts'
 import { dtdLimit } from './edid/encode.ts'
 import type { SignalOptions } from './link.ts'
-import { FRL_EFFICIENCY, bitsPerPixel } from './link.ts'
+import { FRL_EFFICIENCY, bitsPerPixel, tmdsCharacterRateHz } from './link.ts'
 import { cvt, cvtRb, cvtRb2 } from './timing/cvt.ts'
 import { gtf } from './timing/gtf.ts'
 import { CTA_TIMINGS } from './timing/cta.ts'
@@ -256,7 +256,11 @@ export function edidAroundTiming(timing: Timing, opts: TimingEdidOptions): Build
 
     if (!tooFastForDtd && vic === undefined) cta.detailedTimings = [DTD(timing)]
 
-    const tmdsMHz = Math.min(600, Math.ceil(clockMHz * (s.format === 'ycbcr420' ? 0.5 : s.bpc / 8)))
+    // The TMDS rate the mode needs (4:2:2 at the pixel clock, 4:2:0 at half of
+    // it times the depth), rounded UP to the field's 5 MHz step: to the nearest
+    // step, 4K30's 297 MHz went out as 295, below the mode itself. DSC never
+    // rides TMDS; it states the rate the mode would need uncompressed.
+    const tmdsMHz = Math.min(600, Math.ceil(tmdsCharacterRateHz(timing, { ...s, dsc: false }) / 5e6) * 5)
     cta.hdmiVsdb = {
       physicalAddress: [1, 0, 0, 0],
       supportsAi: false,
@@ -268,7 +272,9 @@ export function edidAroundTiming(timing: Timing, opts: TimingEdidOptions): Build
       maxTmdsClockMHz: tmdsMHz,
     }
 
-    const needsForum = s.dsc || s.vrr || clockMHz * (s.bpc / 8) > 340
+    // 4:2:2 is clocked at the pixel clock whatever its depth, so deep 4:2:2
+    // below 340 MHz needs no scrambling and no Forum block.
+    const needsForum = s.dsc || s.vrr || (s.format === 'ycbcr422' ? clockMHz : clockMHz * (s.bpc / 8)) > 340
     if (needsForum) {
       cta.hdmiForumVsdb = {
         version: 1,

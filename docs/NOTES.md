@@ -240,5 +240,19 @@ are listed rows on standard or RB1 blanking (4096 × 2160 @60 12-bit on the DP 1
 for one), where 8-bit 4:4:4, which NovaStar put in the same frame-rate cell, gets the
 same answer at the same timing.
 
+**The built EDID's TMDS ceiling, fixed the same day.** The builder sized the HDMI VSDB's
+Max_TMDS_Clock (and the Forum block's character rate) with its own sum, clock × bpc/8, or
+half the clock for 4:2:0. That overstated deep 4:2:2 (1080p60 12-bit said 225 MHz; it
+needs 148.5) and understated deep 4:2:0 (4K60 10-bit said 295; it needs 371.25). Worse,
+it rounded to whole MHz and the encoder then rounded to the field's nearest 5 MHz, so
+4K30's 297 MHz went out as 295, below the mode the EDID describes. A source that holds
+the sink to that ceiling would refuse it; i915 does (`hdmi_port_clock_limit` in
+`intel_hdmi.c` takes the EDID's `max_tmds_clock` as a limit). It now takes
+`tmdsCharacterRateHz` and rounds up to the 5 MHz step. Deep 4:2:2 below 340 MHz no
+longer gets a Forum block, since it needs no scrambling. Over 336,576 simple-mode
+builds (34 sizes, 11 rates, 5 standards, whole and 1000/1001, 96 signals), 106,545 had
+stated a ceiling below their own mode; none do now. 159,321 builds changed, nearly all
+by that one byte; 1,380 deep 4:2:2 builds also lost the Forum block.
+
 LivePremier Plus vendors the embed build, so a change here goes there too: `npm run
 build:embed`, commit `dist-embed/`, then its `npm run sync:otter-edid`.

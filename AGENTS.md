@@ -118,7 +118,7 @@ src/components/    UI only. No arithmetic lives here.
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 138 tests.
+  fixture tile) saves back byte for byte when not edited. 139 tests.
 
 **Assumed, and NOT verified:**
 

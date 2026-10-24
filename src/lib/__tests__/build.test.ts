@@ -116,6 +116,37 @@ describe('signal options reach the EDID', () => {
     expect(rate({ format: 'ycbcr422', bpc: 12 })).toBe(5)
   })
 
+  it('the TMDS ceiling is the rate the mode needs, rounded up to the 5 MHz step', () => {
+    const cta = (o: Partial<SimpleRequest>, s: Partial<typeof DEFAULT_SIGNAL> = {}) =>
+      roundTrip(req({ ...o, signal: { ...DEFAULT_SIGNAL, ...s } })).edid.extensions.find(
+        (e) => e.kind === 'cta',
+      ) as CtaExtension
+    const uhd30 = { hActive: 3840, vActive: 2160, refreshHz: 30 }
+    const uhd60 = { hActive: 3840, vActive: 2160, refreshHz: 60 }
+
+    // 4K30 is 297 MHz. Rounded to the nearest step it went out as 295, below
+    // the mode the EDID describes.
+    expect(cta(uhd30).hdmiVsdb!.maxTmdsClockMHz).toBe(300)
+    expect(cta({}).hdmiVsdb!.maxTmdsClockMHz).toBe(150)
+    expect(cta({}, { bpc: 10 }).hdmiVsdb!.maxTmdsClockMHz).toBe(190)
+
+    // 4:2:2 is clocked at the pixel clock whatever the depth: 1080p60 12-bit
+    // needs 148.5 MHz, not the 222.75 that 12-bit 4:4:4 would.
+    expect(cta({}, { format: 'ycbcr422', bpc: 12 }).hdmiVsdb!.maxTmdsClockMHz).toBe(150)
+    // And 4K30 12-bit 4:2:2 is 297 MHz, which needs no scrambling, so no Forum block.
+    const deep422 = cta(uhd30, { format: 'ycbcr422', bpc: 12 })
+    expect(deep422.hdmiVsdb!.maxTmdsClockMHz).toBe(300)
+    expect(deep422.hdmiForumVsdb).toBeUndefined()
+
+    // 4:2:0 halves the clock but deep colour still multiplies it: 4K60 10-bit
+    // is 371.25 MHz. Its Forum block, and its 10-bit 4:2:0 flag, stay.
+    const deep420 = cta(uhd60, { format: 'ycbcr420', bpc: 10 })
+    expect(deep420.hdmiVsdb!.maxTmdsClockMHz).toBe(375)
+    expect(deep420.hdmiForumVsdb!.maxTmdsCharacterRateMHz).toBe(375)
+    expect(deep420.hdmiForumVsdb!.deepColor420_30).toBe(true)
+    expect(cta(uhd60, { format: 'ycbcr420' }).hdmiVsdb!.maxTmdsClockMHz).toBe(300)
+  })
+
   it('VRR writes the window it was given, and survives the round trip', () => {
     const { edid } = roundTrip(
       req({ signal: { ...DEFAULT_SIGNAL, vrr: true, vrrMinHz: 48, vrrMaxHz: 144 } }),

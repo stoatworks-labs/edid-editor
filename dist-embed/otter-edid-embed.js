@@ -14569,7 +14569,10 @@ function edidAroundTiming(timing, opts) {
 			}
 		}
 		if (!tooFastForDtd && vic === void 0) cta.detailedTimings = [DTD(timing)];
-		const tmdsMHz = Math.min(600, Math.ceil(clockMHz * (s.format === "ycbcr420" ? .5 : s.bpc / 8)));
+		const tmdsMHz = Math.min(600, Math.ceil(tmdsCharacterRateHz(timing, {
+			...s,
+			dsc: false
+		}) / 5e6) * 5);
 		cta.hdmiVsdb = {
 			physicalAddress: [
 				1,
@@ -14585,7 +14588,7 @@ function edidAroundTiming(timing, opts) {
 			dviDual: false,
 			maxTmdsClockMHz: tmdsMHz
 		};
-		if (s.dsc || s.vrr || clockMHz * (s.bpc / 8) > 340) {
+		if (s.dsc || s.vrr || (s.format === "ycbcr422" ? clockMHz : clockMHz * (s.bpc / 8)) > 340) {
 			cta.hdmiForumVsdb = {
 				version: 1,
 				maxTmdsCharacterRateMHz: tmdsMHz,
