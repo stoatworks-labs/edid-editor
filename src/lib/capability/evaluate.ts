@@ -181,6 +181,11 @@ export function evaluateDevice(d: Device, t: Timing, s: SignalOptions): DeviceVe
   }
 }
 
+/** Why a device refuses the mode, in one line: its first mode's first connector's first reason. */
+export function unsupportedReason(v: DeviceVerdict): string {
+  return v.modes[0]?.connectors[0]?.reasons[0] ?? 'no input mode carries it'
+}
+
 export function evaluateAll(t: Timing, s: SignalOptions, devices: Device[] = DEVICE_LIST): DeviceVerdict[] {
   return devices.map((d) => evaluateDevice(d, t, s))
 }

@@ -1,8 +1,7 @@
 import type { MosaicCheck, MosaicRequest, MosaicResult } from '../lib/mosaic.ts'
-import { MOSAIC_GRIDS, mosaicTopologyId } from '../lib/mosaic.ts'
+import { MOSAIC_GRIDS, mosaicArchive, mosaicTopologyId } from '../lib/mosaic.ts'
 import { timingLabel } from '../lib/timing/types.ts'
-import { zipStored } from '../lib/zip.ts'
-import { saveBytes, slug } from './HexView.tsx'
+import { saveBytes } from './HexView.tsx'
 import { Num, Panel, Pick, Stat, Text } from './ui.tsx'
 
 const PRESETS: { label: string; w: number; h: number; r: number }[] = [
@@ -38,8 +37,8 @@ export function MosaicMode({
 
   const saveAll = () => {
     if (!result) return
-    const zip = zipStored(result.tiles.map((t) => ({ name: t.file, data: t.bytes })))
-    saveBytes(zip, `${slug(req.name)}_${req.width}x${req.height}_${req.refreshHz}Hz.zip`, 'application/zip')
+    const zip = mosaicArchive(req, result)
+    saveBytes(zip.bytes, zip.name, 'application/zip')
   }
 
   return (

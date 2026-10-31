@@ -299,6 +299,16 @@ export function decodeEdid(data: Uint8Array | number[]): DecodeResult {
   return { edid, issues }
 }
 
+/**
+ * A file's bytes as `parseEdidFile` wants them: the bytes themselves when the
+ * file is a binary EDID, its text otherwise. A real EDID always starts
+ * 00 FF FF FF; anything else is a dump, whatever its extension says.
+ */
+export function fileContents(buf: Uint8Array): Uint8Array | string {
+  const isBinary = buf[0] === 0x00 && buf[1] === 0xff && buf[2] === 0xff
+  return isBinary ? buf : new TextDecoder().decode(buf)
+}
+
 /** Accepts a raw binary, or a hex dump in any of the common shapings. */
 export function parseEdidFile(input: Uint8Array | string): DecodeResult {
   if (typeof input !== 'string') return decodeEdid(input)

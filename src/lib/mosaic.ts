@@ -2,6 +2,9 @@ import type { Timing } from './timing/types.ts'
 import { hFreq } from './timing/types.ts'
 import { checksum } from './edid/encode.ts'
 import { encodeTiledTopology, encodeType1Timing } from './edid/displayid.ts'
+import type { SignalOptions } from './link.ts'
+import { slug } from './hexdump.ts'
+import { zipStored } from './zip.ts'
 
 /**
  * Mosaic mode: one canvas split across several connectors, one EDID per plug,
@@ -346,6 +349,32 @@ export function buildMosaic(r: MosaicRequest, nameFor?: (col: number, row: numbe
   }
 
   return { tileWidth: tileW, tileHeight: tileH, tileTiming: toTiming(tile), baseTiming: toTiming(stand), tiles }
+}
+
+/**
+ * `buildMosaic` for a caller that wants the reason instead of an exception: the
+ * page, as the request is typed, and the MCP server. The errors are
+ * `mosaicErrors`, or whatever the builder threw.
+ */
+export function tryMosaic(r: MosaicRequest): { errors: string[]; result: MosaicResult | null } {
+  const errors = mosaicErrors(r)
+  if (errors.length) return { errors, result: null }
+  try {
+    return { errors, result: buildMosaic(r) }
+  } catch (e) {
+    return { errors: [e instanceof Error ? e.message : String(e)], result: null }
+  }
+}
+
+/** What each plug carries: the signal asked for, at the mosaic's bit depth. */
+export const tileSignal = (r: MosaicRequest, s: SignalOptions): SignalOptions => ({ ...s, bpc: r.bitDepth })
+
+/** Every tile exactly as built, in one stored zip, and the name it is saved as. */
+export function mosaicArchive(r: MosaicRequest, result: MosaicResult): { name: string; bytes: Uint8Array } {
+  return {
+    name: `${slug(r.name)}_${r.width}x${r.height}_${r.refreshHz}Hz.zip`,
+    bytes: zipStored(result.tiles.map((t) => ({ name: t.file, data: t.bytes }))),
+  }
 }
 
 export type Verdict = 'ok' | 'warn' | 'bad'

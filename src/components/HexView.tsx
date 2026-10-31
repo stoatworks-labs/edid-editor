@@ -1,33 +1,10 @@
 import { useMemo, useRef, useState } from 'react'
 import type { Edid } from '../lib/edid/types.ts'
 import { encodeEdid } from '../lib/edid/encode.ts'
+import { fileContents } from '../lib/edid/decode.ts'
+import type { ByteFormat } from '../lib/hexdump.ts'
+import { BYTE_FORMATS, renderBytes, slug, textExtension } from '../lib/hexdump.ts'
 import { Panel } from './ui.tsx'
-
-type Format = 'bin' | 'hex' | 'c' | 'xxd'
-
-function render(bytes: Uint8Array, fmt: Format, name: string): string {
-  const hex = (b: number) => b.toString(16).padStart(2, '0')
-  switch (fmt) {
-    case 'hex':
-      return [...bytes].map(hex).join('')
-    case 'c': {
-      const lines: string[] = [`static const unsigned char ${name}[${bytes.length}] = {`]
-      for (let i = 0; i < bytes.length; i += 12) {
-        lines.push('  ' + [...bytes.slice(i, i + 12)].map((b) => `0x${hex(b)}`).join(', ') + ',')
-      }
-      lines.push('};')
-      return lines.join('\n')
-    }
-    default: {
-      const lines: string[] = []
-      for (let i = 0; i < bytes.length; i += 16) {
-        const chunk = [...bytes.slice(i, i + 16)]
-        lines.push(`${i.toString(16).padStart(8, '0')}: ${chunk.map(hex).join(' ')}`)
-      }
-      return lines.join('\n')
-    }
-  }
-}
 
 export function saveBytes(bytes: Uint8Array, filename: string, type = 'application/octet-stream') {
   const blob = new Blob([bytes.slice().buffer as ArrayBuffer], { type })
@@ -38,9 +15,6 @@ export function saveBytes(bytes: Uint8Array, filename: string, type = 'applicati
   a.click()
   URL.revokeObjectURL(url)
 }
-
-export const slug = (s: string) =>
-  (s || 'edid').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'edid'
 
 export function HexView({
   edid,
@@ -57,7 +31,7 @@ export function HexView({
   onLoad?: (data: Uint8Array | string) => void
   title?: string
 }) {
-  const [fmt, setFmt] = useState<Format>('xxd')
+  const [fmt, setFmt] = useState<ByteFormat>('xxd')
   const [copied, setCopied] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -83,7 +57,7 @@ export function HexView({
 
   const bytes = built.bytes
   const blocks = Math.ceil(bytes.length / 128)
-  const text = render(bytes, fmt, slug(name))
+  const text = renderBytes(bytes, fmt, name)
 
   // Binary is the only format any EDID writer actually eats, so it is a real
   // .bin blob rather than a text file with a .bin extension.
@@ -94,7 +68,7 @@ export function HexView({
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${slug(name)}.${fmt === 'c' ? 'h' : 'txt'}`
+    a.download = `${slug(name)}.${textExtension(fmt)}`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -102,9 +76,9 @@ export function HexView({
   return (
     <Panel title={title ?? `EDID bytes — ${bytes.length} bytes, ${blocks} block${blocks > 1 ? 's' : ''}`}>
       <div className="row" style={{ marginBottom: 10 }}>
-        {(['xxd', 'hex', 'c'] as Format[]).map((f) => (
-          <button key={f} className="minor" aria-pressed={fmt === f} onClick={() => setFmt(f)}>
-            {f === 'xxd' ? 'Offset dump' : f === 'hex' ? 'Flat hex' : 'C array'}
+        {BYTE_FORMATS.map((f) => (
+          <button key={f.value} className="minor" aria-pressed={fmt === f.value} onClick={() => setFmt(f.value)}>
+            {f.label}
           </button>
         ))}
         <span style={{ flex: 1 }} />
@@ -135,10 +109,7 @@ export function HexView({
           onChange={async (e) => {
             const f = e.target.files?.[0]
             if (!f) return
-            const buf = new Uint8Array(await f.arrayBuffer())
-            // A real EDID always starts 00 FF FF FF; anything else is text.
-            const isBinary = buf[0] === 0x00 && buf[1] === 0xff && buf[2] === 0xff
-            onLoad?.(isBinary ? buf : new TextDecoder().decode(buf))
+            onLoad?.(fileContents(new Uint8Array(await f.arrayBuffer())))
             e.target.value = ''
           }}
         />

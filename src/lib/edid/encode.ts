@@ -20,11 +20,12 @@ import { encodeCta } from './cta861.ts'
 import { encodeDisplayId } from './displayid.ts'
 
 export class EncodeError extends Error {
-  constructor(
-    public field: string,
-    message: string,
-  ) {
+  // A declared field, not a `public` parameter property: Node's type stripping
+  // refuses those, and the MCP server runs this file straight from source.
+  field: string
+  constructor(field: string, message: string) {
     super(`${field}: ${message}`)
+    this.field = field
     this.name = 'EncodeError'
   }
 }

@@ -36,7 +36,10 @@ src/lib/build.ts   simple mode: resolution + rate -> a whole EDID
 src/lib/mosaic.ts  mosaic mode: canvas + grid -> one tiled EDID per plug,
                    a reference builder's bytes exactly (see below)
 src/lib/zip.ts     stored zip for the mosaic download
+src/lib/hexdump.ts the text dumps (offset, flat hex, C array) the page saves
 src/components/    UI only. No arithmetic lives here.
+src/mcp/           the MCP server: the page's modes and panels as tools, over
+                   stdio. Calls lib/ and nothing else; see CLAUDE.md.
 ```
 
 ## Load-bearing invariants
@@ -123,7 +126,8 @@ src/components/    UI only. No arithmetic lives here.
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 146 tests.
+  fixture tile) saves back byte for byte when not edited. 162 tests, 16 of them
+  the MCP server's, which check it against the library asked directly.
 
 **Assumed, and NOT verified:**
 

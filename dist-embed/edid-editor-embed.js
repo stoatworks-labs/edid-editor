@@ -12865,6 +12865,14 @@ function decodeEdid(data) {
 		issues
 	};
 }
+/**
+* A file's bytes as `parseEdidFile` wants them: the bytes themselves when the
+* file is a binary EDID, its text otherwise. A real EDID always starts
+* 00 FF FF FF; anything else is a dump, whatever its extension says.
+*/
+function fileContents(buf) {
+	return buf[0] === 0 && buf[1] === 255 && buf[2] === 255 ? buf : new TextDecoder().decode(buf);
+}
 /** Accepts a raw binary, or a hex dump in any of the common shapings. */
 function parseEdidFile(input) {
 	if (typeof input !== "string") return decodeEdid(input);
@@ -14347,6 +14355,52 @@ var DMT_TIMINGS = [
 }));
 //#endregion
 //#region src/lib/build.ts
+/** What simple mode opens on, and what Reset goes back to. */
+var DEFAULT_REQUEST = {
+	name: "UHD-2160p60",
+	hActive: 3840,
+	vActive: 2160,
+	refreshHz: 60,
+	standard: "manual",
+	interlaced: false,
+	fractional: false,
+	signal: { ...DEFAULT_SIGNAL }
+};
+/**
+* The standards simple mode offers, in the order it offers them. `manual` is
+* the automatic choice, despite its name: `solveTiming` tries a CTA VIC, then
+* DMT, then CVT-RB v2.
+*/
+var TIMING_STANDARDS = [
+	{
+		value: "manual",
+		label: "Auto — CTA VIC, then DMT, then CVT-RB v2"
+	},
+	{
+		value: "cta",
+		label: "CTA-861 VIC (broadcast rasters)"
+	},
+	{
+		value: "dmt",
+		label: "VESA DMT"
+	},
+	{
+		value: "cvt-rb2",
+		label: "CVT reduced blanking v2 (cheapest)"
+	},
+	{
+		value: "cvt-rb",
+		label: "CVT reduced blanking v1"
+	},
+	{
+		value: "cvt",
+		label: "CVT standard blanking"
+	},
+	{
+		value: "gtf",
+		label: "GTF 1.1 (legacy LiveCore / Midra)"
+	}
+];
 var DTD = (t) => ({
 	kind: "dtd",
 	timing: t,
@@ -14955,36 +15009,6 @@ var PRESETS$1 = [
 		r: 240
 	}
 ];
-var STANDARDS = [
-	{
-		value: "manual",
-		label: "Auto — CTA VIC, then DMT, then CVT-RB v2"
-	},
-	{
-		value: "cta",
-		label: "CTA-861 VIC (broadcast rasters)"
-	},
-	{
-		value: "dmt",
-		label: "VESA DMT"
-	},
-	{
-		value: "cvt-rb2",
-		label: "CVT reduced blanking v2 (cheapest)"
-	},
-	{
-		value: "cvt-rb",
-		label: "CVT reduced blanking v1"
-	},
-	{
-		value: "cvt",
-		label: "CVT standard blanking"
-	},
-	{
-		value: "gtf",
-		label: "GTF 1.1 (legacy LiveCore / Midra)"
-	}
-];
 var FORMATS = [
 	{
 		value: "rgb444",
@@ -15112,7 +15136,7 @@ function SimpleMode({ req, onChange, onBuild, notes }) {
 					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Pick, {
 						label: "Timing standard",
 						value: req.standard,
-						options: STANDARDS,
+						options: TIMING_STANDARDS,
 						onChange: (standard) => set({ standard })
 					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
 						style: {
@@ -15243,6 +15267,114 @@ function SimpleMode({ req, onChange, onBuild, notes }) {
 			}, i))
 		}) : null
 	] });
+}
+//#endregion
+//#region src/lib/hexdump.ts
+var BYTE_FORMATS = [
+	{
+		value: "xxd",
+		label: "Offset dump"
+	},
+	{
+		value: "hex",
+		label: "Flat hex"
+	},
+	{
+		value: "c",
+		label: "C array"
+	}
+];
+/** A file-name and C-identifier-safe form of an EDID's name. */
+var slug = (s) => (s || "edid").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "edid";
+/** `name` is the C array's identifier, and is slugged here. */
+function renderBytes(bytes, fmt, name) {
+	const hex = (b) => b.toString(16).padStart(2, "0");
+	switch (fmt) {
+		case "hex": return [...bytes].map(hex).join("");
+		case "c": {
+			const lines = [`static const unsigned char ${slug(name)}[${bytes.length}] = {`];
+			for (let i = 0; i < bytes.length; i += 12) lines.push("  " + [...bytes.slice(i, i + 12)].map((b) => `0x${hex(b)}`).join(", ") + ",");
+			lines.push("};");
+			return lines.join("\n");
+		}
+		default: {
+			const lines = [];
+			for (let i = 0; i < bytes.length; i += 16) {
+				const chunk = [...bytes.slice(i, i + 16)];
+				lines.push(`${i.toString(16).padStart(8, "0")}: ${chunk.map(hex).join(" ")}`);
+			}
+			return lines.join("\n");
+		}
+	}
+}
+/** The extension a saved text dump gets: a C array is a header. */
+var textExtension = (fmt) => fmt === "c" ? "h" : "txt";
+//#endregion
+//#region src/lib/zip.ts
+/**
+* A stored (uncompressed) zip, enough to hand over a mosaic's tile files in
+* one download. EDIDs are a few hundred bytes; deflate would buy nothing and
+* cost a dependency. Every archiver reads method 0.
+*/
+var table = null;
+function crc32(data) {
+	if (!table) {
+		table = /* @__PURE__ */ new Uint32Array(256);
+		for (let n = 0; n < 256; n++) {
+			let c = n;
+			for (let k = 0; k < 8; k++) c = c & 1 ? 3988292384 ^ c >>> 1 : c >>> 1;
+			table[n] = c >>> 0;
+		}
+	}
+	let crc = 4294967295;
+	for (const b of data) crc = table[(crc ^ b) & 255] ^ crc >>> 8;
+	return (crc ^ 4294967295) >>> 0;
+}
+function zipStored(files) {
+	const u16 = (v) => [v & 255, v >> 8 & 255];
+	const u32 = (v) => [
+		v & 255,
+		v >>> 8 & 255,
+		v >>> 16 & 255,
+		v >>> 24 & 255
+	];
+	const enc = new TextEncoder();
+	const local = [];
+	const central = [];
+	for (const f of files) {
+		const name = [...enc.encode(f.name)];
+		const crc = crc32(f.data);
+		const offset = local.length;
+		const common = [
+			...u16(20),
+			...u16(0),
+			...u16(0),
+			...u16(0),
+			...u16(33),
+			...u32(crc),
+			...u32(f.data.length),
+			...u32(f.data.length),
+			...u16(name.length),
+			...u16(0)
+		];
+		local.push(...u32(67324752), ...common, ...name, ...f.data);
+		central.push(...u32(33639248), ...u16(20), ...common, ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset), ...name);
+	}
+	const end = [
+		...u32(101010256),
+		...u16(0),
+		...u16(0),
+		...u16(files.length),
+		...u16(files.length),
+		...u32(central.length),
+		...u32(local.length),
+		...u16(0)
+	];
+	return Uint8Array.from([
+		...local,
+		...central,
+		...end
+	]);
 }
 //#endregion
 //#region src/lib/mosaic.ts
@@ -15534,6 +15666,44 @@ function buildMosaic(r, nameFor) {
 	};
 }
 /**
+* `buildMosaic` for a caller that wants the reason instead of an exception: the
+* page, as the request is typed, and the MCP server. The errors are
+* `mosaicErrors`, or whatever the builder threw.
+*/
+function tryMosaic(r) {
+	const errors = mosaicErrors(r);
+	if (errors.length) return {
+		errors,
+		result: null
+	};
+	try {
+		return {
+			errors,
+			result: buildMosaic(r)
+		};
+	} catch (e) {
+		return {
+			errors: [e instanceof Error ? e.message : String(e)],
+			result: null
+		};
+	}
+}
+/** What each plug carries: the signal asked for, at the mosaic's bit depth. */
+var tileSignal = (r, s) => ({
+	...s,
+	bpc: r.bitDepth
+});
+/** Every tile exactly as built, in one stored zip, and the name it is saved as. */
+function mosaicArchive(r, result) {
+	return {
+		name: `${slug(r.name)}_${r.width}x${r.height}_${r.refreshHz}Hz.zip`,
+		bytes: zipStored(result.tiles.map((t) => ({
+			name: t.file,
+			data: t.bytes
+		})))
+	};
+}
+/**
 * What a Mac will do with the set, per bench results with the reference files on macOS 26
 * and 27, the BetterDisplay field reports and PixelHue's notes. Advice, not a build error.
 * Which chips manage what is inferred from who reported it.
@@ -15605,94 +15775,7 @@ function checkMosaic(r) {
 	return out;
 }
 //#endregion
-//#region src/lib/zip.ts
-/**
-* A stored (uncompressed) zip, enough to hand over a mosaic's tile files in
-* one download. EDIDs are a few hundred bytes; deflate would buy nothing and
-* cost a dependency. Every archiver reads method 0.
-*/
-var table = null;
-function crc32(data) {
-	if (!table) {
-		table = /* @__PURE__ */ new Uint32Array(256);
-		for (let n = 0; n < 256; n++) {
-			let c = n;
-			for (let k = 0; k < 8; k++) c = c & 1 ? 3988292384 ^ c >>> 1 : c >>> 1;
-			table[n] = c >>> 0;
-		}
-	}
-	let crc = 4294967295;
-	for (const b of data) crc = table[(crc ^ b) & 255] ^ crc >>> 8;
-	return (crc ^ 4294967295) >>> 0;
-}
-function zipStored(files) {
-	const u16 = (v) => [v & 255, v >> 8 & 255];
-	const u32 = (v) => [
-		v & 255,
-		v >>> 8 & 255,
-		v >>> 16 & 255,
-		v >>> 24 & 255
-	];
-	const enc = new TextEncoder();
-	const local = [];
-	const central = [];
-	for (const f of files) {
-		const name = [...enc.encode(f.name)];
-		const crc = crc32(f.data);
-		const offset = local.length;
-		const common = [
-			...u16(20),
-			...u16(0),
-			...u16(0),
-			...u16(0),
-			...u16(33),
-			...u32(crc),
-			...u32(f.data.length),
-			...u32(f.data.length),
-			...u16(name.length),
-			...u16(0)
-		];
-		local.push(...u32(67324752), ...common, ...name, ...f.data);
-		central.push(...u32(33639248), ...u16(20), ...common, ...u16(0), ...u16(0), ...u16(0), ...u32(0), ...u32(offset), ...name);
-	}
-	const end = [
-		...u32(101010256),
-		...u16(0),
-		...u16(0),
-		...u16(files.length),
-		...u16(files.length),
-		...u32(central.length),
-		...u32(local.length),
-		...u16(0)
-	];
-	return Uint8Array.from([
-		...local,
-		...central,
-		...end
-	]);
-}
-//#endregion
 //#region src/components/HexView.tsx
-function render(bytes, fmt, name) {
-	const hex = (b) => b.toString(16).padStart(2, "0");
-	switch (fmt) {
-		case "hex": return [...bytes].map(hex).join("");
-		case "c": {
-			const lines = [`static const unsigned char ${name}[${bytes.length}] = {`];
-			for (let i = 0; i < bytes.length; i += 12) lines.push("  " + [...bytes.slice(i, i + 12)].map((b) => `0x${hex(b)}`).join(", ") + ",");
-			lines.push("};");
-			return lines.join("\n");
-		}
-		default: {
-			const lines = [];
-			for (let i = 0; i < bytes.length; i += 16) {
-				const chunk = [...bytes.slice(i, i + 16)];
-				lines.push(`${i.toString(16).padStart(8, "0")}: ${chunk.map(hex).join(" ")}`);
-			}
-			return lines.join("\n");
-		}
-	}
-}
 function saveBytes(bytes, filename, type = "application/octet-stream") {
 	const blob = new Blob([bytes.slice().buffer], { type });
 	const url = URL.createObjectURL(blob);
@@ -15702,7 +15785,6 @@ function saveBytes(bytes, filename, type = "application/octet-stream") {
 	a.click();
 	URL.revokeObjectURL(url);
 }
-var slug = (s) => (s || "edid").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "edid";
 function HexView({ edid, raw, name, onLoad, title }) {
 	const [fmt, setFmt] = (0, import_react.useState)("xxd");
 	const [copied, setCopied] = (0, import_react.useState)(false);
@@ -15737,14 +15819,14 @@ function HexView({ edid, raw, name, onLoad, title }) {
 	});
 	const bytes = built.bytes;
 	const blocks = Math.ceil(bytes.length / 128);
-	const text = render(bytes, fmt, slug(name));
+	const text = renderBytes(bytes, fmt, name);
 	const download = () => saveBytes(bytes, `${slug(name)}.bin`);
 	const downloadText = () => {
 		const blob = new Blob([text], { type: "text/plain" });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement("a");
 		a.href = url;
-		a.download = `${slug(name)}.${fmt === "c" ? "h" : "txt"}`;
+		a.download = `${slug(name)}.${textExtension(fmt)}`;
 		a.click();
 		URL.revokeObjectURL(url);
 	};
@@ -15755,16 +15837,12 @@ function HexView({ edid, raw, name, onLoad, title }) {
 				className: "row",
 				style: { marginBottom: 10 },
 				children: [
-					[
-						"xxd",
-						"hex",
-						"c"
-					].map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
+					BYTE_FORMATS.map((f) => /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "minor",
-						"aria-pressed": fmt === f,
-						onClick: () => setFmt(f),
-						children: f === "xxd" ? "Offset dump" : f === "hex" ? "Flat hex" : "C array"
-					}, f)),
+						"aria-pressed": fmt === f.value,
+						onClick: () => setFmt(f.value),
+						children: f.label
+					}, f.value)),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", { style: { flex: 1 } }),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 						className: "minor",
@@ -15809,9 +15887,7 @@ function HexView({ edid, raw, name, onLoad, title }) {
 						onChange: async (e) => {
 							const f = e.target.files?.[0];
 							if (!f) return;
-							const buf = new Uint8Array(await f.arrayBuffer());
-							const isBinary = buf[0] === 0 && buf[1] === 255 && buf[2] === 255;
-							onLoad?.(isBinary ? buf : new TextDecoder().decode(buf));
+							onLoad?.(fileContents(new Uint8Array(await f.arrayBuffer())));
 							e.target.value = "";
 						}
 					})
@@ -15874,10 +15950,8 @@ function MosaicMode({ req, onChange, result, errors, selected, onSelect }) {
 	const preset = PRESETS.find((p) => p.w === req.width && p.h === req.height && p.r === req.refreshHz);
 	const saveAll = () => {
 		if (!result) return;
-		saveBytes(zipStored(result.tiles.map((t) => ({
-			name: t.file,
-			data: t.bytes
-		}))), `${slug(req.name)}_${req.width}x${req.height}_${req.refreshHz}Hz.zip`, "application/zip");
+		const zip = mosaicArchive(req, result);
+		saveBytes(zip.bytes, zip.name, "application/zip");
 	};
 	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 		/* @__PURE__ */ (0, import_jsx_runtime.jsxs)(Panel, {
@@ -18642,6 +18716,10 @@ function evaluateDevice(d, t, s) {
 		warnings
 	};
 }
+/** Why a device refuses the mode, in one line: its first mode's first connector's first reason. */
+function unsupportedReason(v) {
+	return v.modes[0]?.connectors[0]?.reasons[0] ?? "no input mode carries it";
+}
 function evaluateAll(t, s, devices = DEVICE_LIST) {
 	return devices.map((d) => evaluateDevice(d, t, s));
 }
@@ -18694,7 +18772,7 @@ function Row({ v }) {
 			children: ["via ", v.requiredConnector.label]
 		}) : null] }) : v.status === "unsupported" ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 			className: "vendor",
-			children: v.modes[0]?.connectors[0]?.reasons[0] ?? "no input mode carries it"
+			children: unsupportedReason(v)
 		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 			className: "vendor",
 			children: "—"
@@ -19079,16 +19157,6 @@ function MosaicApply({ host, mosaic, cols, rows }) {
 }
 //#endregion
 //#region src/App.tsx
-var INITIAL = {
-	name: "UHD-2160p60",
-	hActive: 3840,
-	vActive: 2160,
-	refreshHz: 60,
-	standard: "manual",
-	interlaced: false,
-	fractional: false,
-	signal: { ...DEFAULT_SIGNAL }
-};
 /**
 * The signal controls are duplicated into advanced mode deliberately.
 *
@@ -19189,28 +19257,11 @@ function App({ host } = {}) {
 	const [mode, setMode] = (0, import_react.useState)(opened ? "advanced" : "simple");
 	const [mosaicReq, setMosaicReq] = (0, import_react.useState)(DEFAULT_MOSAIC);
 	const [tileIdx, setTileIdx] = (0, import_react.useState)(0);
-	const mosaic = (0, import_react.useMemo)(() => {
-		const errors = mosaicErrors(mosaicReq);
-		if (errors.length) return {
-			errors,
-			result: null
-		};
-		try {
-			return {
-				errors,
-				result: buildMosaic(mosaicReq)
-			};
-		} catch (e) {
-			return {
-				errors: [e instanceof Error ? e.message : String(e)],
-				result: null
-			};
-		}
-	}, [mosaicReq]);
+	const mosaic = (0, import_react.useMemo)(() => tryMosaic(mosaicReq), [mosaicReq]);
 	const tile = mosaic.result?.tiles[Math.min(tileIdx, mosaic.result.tiles.length - 1)];
-	const [req, setReq] = (0, import_react.useState)(INITIAL);
-	const [edid, setEdid] = (0, import_react.useState)(() => opened?.edid ?? buildEdid(INITIAL).edid);
-	const [notes, setNotes] = (0, import_react.useState)(() => opened ? [] : buildEdid(INITIAL).notes);
+	const [req, setReq] = (0, import_react.useState)(DEFAULT_REQUEST);
+	const [edid, setEdid] = (0, import_react.useState)(() => opened?.edid ?? buildEdid(DEFAULT_REQUEST).edid);
+	const [notes, setNotes] = (0, import_react.useState)(() => opened ? [] : buildEdid(DEFAULT_REQUEST).notes);
 	const [issues, setIssues] = (0, import_react.useState)(() => opened?.issues ?? []);
 	const primary = (0, import_react.useMemo)(() => primaryTiming(edid), [edid]);
 	const name = displayName(edid);
@@ -19362,17 +19413,11 @@ function App({ host } = {}) {
 					mosaic.result && tile ? /* @__PURE__ */ (0, import_jsx_runtime.jsxs)(import_jsx_runtime.Fragment, { children: [
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(LinkSummary, {
 							timing: mosaic.result.tileTiming,
-							signal: {
-								...req.signal,
-								bpc: mosaicReq.bitDepth
-							}
+							signal: tileSignal(mosaicReq, req.signal)
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(SupportMatrix, {
 							timing: mosaic.result.tileTiming,
-							signal: {
-								...req.signal,
-								bpc: mosaicReq.bitDepth
-							}
+							signal: tileSignal(mosaicReq, req.signal)
 						}),
 						/* @__PURE__ */ (0, import_jsx_runtime.jsx)(HexView, {
 							raw: tile.bytes,
@@ -19437,8 +19482,8 @@ function App({ host } = {}) {
 								}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)("button", {
 									className: "minor",
 									onClick: () => {
-										setReq(INITIAL);
-										const r = buildEdid(INITIAL);
+										setReq(DEFAULT_REQUEST);
+										const r = buildEdid(DEFAULT_REQUEST);
 										setEdid(r.edid);
 										setNotes(r.notes);
 										setIssues([]);

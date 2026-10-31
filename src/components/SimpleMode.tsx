@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { SimpleRequest } from '../lib/build.ts'
+import { TIMING_STANDARDS } from '../lib/build.ts'
 import type { ColorFormat, SignalOptions } from '../lib/link.ts'
-import type { TimingStandard } from '../lib/timing/types.ts'
 import { Check, Num, Panel, Pick, Text } from './ui.tsx'
 
 const PRESETS: { label: string; w: number; h: number; r: number }[] = [
@@ -16,16 +16,6 @@ const PRESETS: { label: string; w: number; h: number; r: number }[] = [
   { label: '2048x1080 @60', w: 2048, h: 1080, r: 60 },
   { label: '8192x1080 @60', w: 8192, h: 1080, r: 60 },
   { label: '1920x1080 @240', w: 1920, h: 1080, r: 240 },
-]
-
-const STANDARDS: { value: TimingStandard; label: string }[] = [
-  { value: 'manual', label: 'Auto — CTA VIC, then DMT, then CVT-RB v2' },
-  { value: 'cta', label: 'CTA-861 VIC (broadcast rasters)' },
-  { value: 'dmt', label: 'VESA DMT' },
-  { value: 'cvt-rb2', label: 'CVT reduced blanking v2 (cheapest)' },
-  { value: 'cvt-rb', label: 'CVT reduced blanking v1' },
-  { value: 'cvt', label: 'CVT standard blanking' },
-  { value: 'gtf', label: 'GTF 1.1 (legacy LiveCore / Midra)' },
 ]
 
 const FORMATS: { value: ColorFormat; label: string }[] = [
@@ -107,7 +97,7 @@ export function SimpleMode({
         </div>
 
         <div className="grid c2" style={{ marginTop: 10 }}>
-          <Pick label="Timing standard" value={req.standard} options={STANDARDS} onChange={(standard) => set({ standard })} />
+          <Pick label="Timing standard" value={req.standard} options={TIMING_STANDARDS} onChange={(standard) => set({ standard })} />
           <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             <button className="go" onClick={onBuild} style={{ width: '100%' }}>
               Calculate

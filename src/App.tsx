@@ -4,15 +4,14 @@ import type { DecodeIssue } from './lib/edid/decode.ts'
 import { parseEdidFile } from './lib/edid/decode.ts'
 import { blankEdid } from './lib/edid/defaults.ts'
 import type { SimpleRequest } from './lib/build.ts'
-import { buildEdid } from './lib/build.ts'
-import { DEFAULT_SIGNAL } from './lib/link.ts'
+import { DEFAULT_REQUEST, buildEdid } from './lib/build.ts'
 import type { ColorFormat, SignalOptions } from './lib/link.ts'
 import { displayName, primaryTiming, setDisplayName } from './lib/primary.ts'
 import { timingLabel } from './lib/timing/types.ts'
 import { SimpleMode } from './components/SimpleMode.tsx'
 import { MosaicChecks, MosaicMode } from './components/MosaicMode.tsx'
 import type { MosaicRequest } from './lib/mosaic.ts'
-import { buildMosaic, checkMosaic, DEFAULT_MOSAIC, mosaicErrors } from './lib/mosaic.ts'
+import { checkMosaic, DEFAULT_MOSAIC, tileSignal, tryMosaic } from './lib/mosaic.ts'
 import { AdvancedMode } from './components/AdvancedMode.tsx'
 import { LinkSummary } from './components/LinkSummary.tsx'
 import { SupportMatrix } from './components/SupportMatrix.tsx'
@@ -22,17 +21,6 @@ import { HostPanel } from './components/HostPanel.tsx'
 import { MosaicApply } from './components/MosaicApply.tsx'
 import { encodeEdid } from './lib/edid/encode.ts'
 import type { EdidHost } from './host.ts'
-
-const INITIAL: SimpleRequest = {
-  name: 'UHD-2160p60',
-  hActive: 3840,
-  vActive: 2160,
-  refreshHz: 60,
-  standard: 'manual',
-  interlaced: false,
-  fractional: false,
-  signal: { ...DEFAULT_SIGNAL },
-}
 
 /**
  * The signal controls are duplicated into advanced mode deliberately.
@@ -93,19 +81,11 @@ export default function App({ host }: { host?: EdidHost } = {}) {
   const [mode, setMode] = useState<'simple' | 'advanced' | 'mosaic'>(opened ? 'advanced' : 'simple')
   const [mosaicReq, setMosaicReq] = useState<MosaicRequest>(DEFAULT_MOSAIC)
   const [tileIdx, setTileIdx] = useState(0)
-  const mosaic = useMemo(() => {
-    const errors = mosaicErrors(mosaicReq)
-    if (errors.length) return { errors, result: null }
-    try {
-      return { errors, result: buildMosaic(mosaicReq) }
-    } catch (e) {
-      return { errors: [e instanceof Error ? e.message : String(e)], result: null }
-    }
-  }, [mosaicReq])
+  const mosaic = useMemo(() => tryMosaic(mosaicReq), [mosaicReq])
   const tile = mosaic.result?.tiles[Math.min(tileIdx, mosaic.result.tiles.length - 1)]
-  const [req, setReq] = useState<SimpleRequest>(INITIAL)
-  const [edid, setEdid] = useState<Edid>(() => opened?.edid ?? buildEdid(INITIAL).edid)
-  const [notes, setNotes] = useState<string[]>(() => (opened ? [] : buildEdid(INITIAL).notes))
+  const [req, setReq] = useState<SimpleRequest>(DEFAULT_REQUEST)
+  const [edid, setEdid] = useState<Edid>(() => opened?.edid ?? buildEdid(DEFAULT_REQUEST).edid)
+  const [notes, setNotes] = useState<string[]>(() => (opened ? [] : buildEdid(DEFAULT_REQUEST).notes))
   const [issues, setIssues] = useState<DecodeIssue[]>(() => opened?.issues ?? [])
 
   const primary = useMemo(() => primaryTiming(edid), [edid])
@@ -224,8 +204,8 @@ export default function App({ host }: { host?: EdidHost } = {}) {
             <MosaicChecks checks={checkMosaic(mosaicReq)} />
             {mosaic.result && tile ? (
               <>
-                <LinkSummary timing={mosaic.result.tileTiming} signal={{ ...req.signal, bpc: mosaicReq.bitDepth }} />
-                <SupportMatrix timing={mosaic.result.tileTiming} signal={{ ...req.signal, bpc: mosaicReq.bitDepth }} />
+                <LinkSummary timing={mosaic.result.tileTiming} signal={tileSignal(mosaicReq, req.signal)} />
+                <SupportMatrix timing={mosaic.result.tileTiming} signal={tileSignal(mosaicReq, req.signal)} />
                 <HexView raw={tile.bytes} name={tile.file.replace(/\.bin$/, '')} title={`${tile.file} — ${tile.bytes.length} bytes, 3 blocks`} />
               </>
             ) : null}
@@ -267,7 +247,7 @@ export default function App({ host }: { host?: EdidHost } = {}) {
               <button className="minor" onClick={() => { setEdid(blankEdid()); setNotes([]); setIssues([]) }}>
                 Start from a blank EDID
               </button>
-              <button className="minor" onClick={() => { setReq(INITIAL); const r = buildEdid(INITIAL); setEdid(r.edid); setNotes(r.notes); setIssues([]) }}>
+              <button className="minor" onClick={() => { setReq(DEFAULT_REQUEST); const r = buildEdid(DEFAULT_REQUEST); setEdid(r.edid); setNotes(r.notes); setIssues([]) }}>
                 Reset
               </button>
             </div>

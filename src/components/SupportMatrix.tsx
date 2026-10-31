@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { SignalOptions } from '../lib/link.ts'
 import type { Timing } from '../lib/timing/types.ts'
-import { evaluateAll } from '../lib/capability/evaluate.ts'
+import { evaluateAll, unsupportedReason } from '../lib/capability/evaluate.ts'
 import type { DeviceVerdict, Status } from '../lib/capability/evaluate.ts'
 import { Panel } from './ui.tsx'
 
@@ -39,9 +39,7 @@ function Row({ v }: { v: DeviceVerdict }) {
             {v.requiredConnector ? <div className="vendor">via {v.requiredConnector.label}</div> : null}
           </>
         ) : v.status === 'unsupported' ? (
-          <span className="vendor">
-            {v.modes[0]?.connectors[0]?.reasons[0] ?? 'no input mode carries it'}
-          </span>
+          <span className="vendor">{unsupportedReason(v)}</span>
         ) : (
           <span className="vendor">—</span>
         )}

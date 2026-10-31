@@ -111,6 +111,37 @@ npm run dev
 `npm test` runs the suite. `npm run build` produces `dist/`, which deploys as a
 Cloudflare static-assets Worker.
 
+## Drive it from Claude
+
+EDID Editor also runs as an MCP server, so Claude Code (or any other MCP client) can
+build, read and check EDIDs itself. It's the same library the page runs, working on files
+on your own machine, and nothing is uploaded. It needs Node 22.18 or later, which runs the
+TypeScript as it is, and nothing else: the library has no dependencies, so there's no
+`npm install` either.
+
+```bash
+claude mcp add edid-editor -- node /path/to/edid-editor/src/mcp/server.ts
+```
+
+Then ask what you'd ask the page: *build a 7680x1080 60 Hz EDID for the LED processor
+and tell me which Aquilon inputs take it at 10-bit*, or *open ~/Desktop/dump.txt and
+say why the E2 won't show it*. The tools are the page's three modes and its panels:
+
+- `open_edid` reads a `.bin` or any hex dump, from a file or pasted, and lists what's
+  wrong with it rather than refusing it. `build_edid` is simple mode, and `build_mosaic`
+  is mosaic mode.
+- `describe_edid` lists the EDID field by field. `edit_edid` is advanced mode: it changes
+  fields by path, all or none, and says if the bytes don't hold a value as given.
+- `solve_timing` is the timing a mode would get, without building anything.
+  `link_requirements` is the link panel, and `check_devices` is the support table, for
+  what's open or for a mode you name. `list_devices` gives the hardware table and its
+  citations.
+- `export` writes a `.bin` or one of the page's text dumps, or a mosaic's tiles as built
+  into one `.zip`. It never writes over the file it opened.
+
+The same caveat applies as on the page: the hardware table is paperwork, and nothing it
+builds has been on real hardware yet.
+
 ## What is verified, and what is not
 
 The timing engine is checked against published VESA DMT values, and the

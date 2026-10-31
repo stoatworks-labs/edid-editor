@@ -2,7 +2,7 @@ import type { Edid, CtaExtension, DetailedTimingDescriptor, DisplayIdExtension }
 import { blankEdid, emptyCta } from './edid/defaults.ts'
 import { dtdLimit } from './edid/encode.ts'
 import type { SignalOptions } from './link.ts'
-import { FRL_EFFICIENCY, bitsPerPixel, tmdsCharacterRateHz } from './link.ts'
+import { DEFAULT_SIGNAL, FRL_EFFICIENCY, bitsPerPixel, tmdsCharacterRateHz } from './link.ts'
 import { cvt, cvtRb, cvtRb2 } from './timing/cvt.ts'
 import { gtf } from './timing/gtf.ts'
 import { CTA_TIMINGS } from './timing/cta.ts'
@@ -21,6 +21,33 @@ export interface SimpleRequest {
   fractional: boolean
   signal: SignalOptions
 }
+
+/** What simple mode opens on, and what Reset goes back to. */
+export const DEFAULT_REQUEST: SimpleRequest = {
+  name: 'UHD-2160p60',
+  hActive: 3840,
+  vActive: 2160,
+  refreshHz: 60,
+  standard: 'manual',
+  interlaced: false,
+  fractional: false,
+  signal: { ...DEFAULT_SIGNAL },
+}
+
+/**
+ * The standards simple mode offers, in the order it offers them. `manual` is
+ * the automatic choice, despite its name: `solveTiming` tries a CTA VIC, then
+ * DMT, then CVT-RB v2.
+ */
+export const TIMING_STANDARDS: { value: TimingStandard; label: string }[] = [
+  { value: 'manual', label: 'Auto — CTA VIC, then DMT, then CVT-RB v2' },
+  { value: 'cta', label: 'CTA-861 VIC (broadcast rasters)' },
+  { value: 'dmt', label: 'VESA DMT' },
+  { value: 'cvt-rb2', label: 'CVT reduced blanking v2 (cheapest)' },
+  { value: 'cvt-rb', label: 'CVT reduced blanking v1' },
+  { value: 'cvt', label: 'CVT standard blanking' },
+  { value: 'gtf', label: 'GTF 1.1 (legacy LiveCore / Midra)' },
+]
 
 export interface BuildResult {
   edid: Edid
