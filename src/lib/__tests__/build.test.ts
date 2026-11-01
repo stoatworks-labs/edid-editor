@@ -7,7 +7,7 @@ import { decodeEdid } from '../edid/decode.ts'
 import { decodeCta } from '../edid/cta861.ts'
 import { primaryTiming } from '../primary.ts'
 import { CTA_TIMINGS } from '../timing/cta.ts'
-import { vFreq } from '../timing/types.ts'
+import { timingLabel, vFreq } from '../timing/types.ts'
 import { linuxDataBlocks, linuxHdmiVsdb } from './linux-cta.ts'
 import type { CtaExtension, DisplayIdExtension } from '../edid/types.ts'
 
@@ -236,6 +236,44 @@ describe('fractional rates', () => {
     expect(frac.pixelClockHz).toBeCloseTo((whole.pixelClockHz * 1000) / 1001, 0)
     expect(vFreq(frac)).toBeCloseTo(59.94, 2)
   })
+})
+
+describe('interlaced builds', () => {
+  // Simple mode asks for the frame height and the field rate; the DTD it writes must
+  // hold one field. Encoded from the frame height, CVT's 1080i60 was a 1080-line
+  // field at 30 Hz, and the range descriptor built around it shut 60 out.
+  const range = (r: ReturnType<typeof roundTrip>) =>
+    r.edid.descriptors.find((d) => d.kind === 'range') as { minVerticalHz: number; maxVerticalHz: number }
+
+  it('1080i60 is VIC 5, and its DTD is a 540-line field, 60 of them a second', () => {
+    const r = roundTrip(req({ interlaced: true }))
+    expect(r.built.vic).toBe(5)
+    const t = primaryTiming(r.edid)!
+    expect(t).toMatchObject({ vActive: 540, interlaced: true })
+    expect(timingLabel(t)).toBe('1920x1080i60')
+    expect(vFreq(t)).toBeCloseTo(60, 6)
+  })
+
+  it('never answers an interlaced request with a progressive DMT mode', () => {
+    // 1280x1024 at 60 is DMT 0x23, and DMT has no interlaced modes at all.
+    for (const standard of ['manual', 'dmt'] as const) {
+      const r = roundTrip(req({ hActive: 1280, vActive: 1024, interlaced: true, standard }))
+      expect(r.built.resolvedStandard).not.toBe('dmt')
+      expect(primaryTiming(r.edid)).toMatchObject({ vActive: 512, interlaced: true })
+      expect(r.built.notes.length).toBeGreaterThan(0)
+    }
+  })
+
+  for (const standard of ['cvt', 'cvt-rb', 'cvt-rb2', 'gtf'] as const) {
+    it(`a ${standard} 1080i60 encodes a 540-line field, inside its own range descriptor`, () => {
+      const r = roundTrip(req({ interlaced: true, standard }))
+      const t = primaryTiming(r.edid)!
+      expect(t).toMatchObject({ vActive: 540, interlaced: true })
+      expect(Math.abs(vFreq(t) - 60)).toBeLessThan(0.2)
+      expect(range(r).minVerticalHz).toBeLessThanOrEqual(vFreq(t))
+      expect(range(r).maxVerticalHz).toBeGreaterThanOrEqual(vFreq(t))
+    })
+  }
 })
 
 describe('non-standard rasters', () => {

@@ -1,4 +1,4 @@
-import type { NamedTiming } from './types.ts'
+import { frameHeight, vFreq, type NamedTiming } from './types.ts'
 
 /**
  * CTA-861 Video Identification Codes.
@@ -97,11 +97,7 @@ function build(r: Row): CtaTiming {
     hSyncPositive: r.hp,
     vSyncPositive: r.vp,
   }
-  const hT = r.h + r.hf + r.hs + r.hb
-  const vT = r.v + r.vf + r.vs + r.vb
-  const rate = (r.clk * 1000) / hT / vT
-  const disp = r.i ? r.v * 2 : r.v
-  t.name = `VIC ${r.vic} — ${r.h}x${disp}${r.i ? 'i' : 'p'}${Math.round(rate)} ${r.par}`
+  t.name = `VIC ${r.vic} — ${r.h}x${frameHeight(t)}${r.i ? 'i' : 'p'}${Math.round(vFreq(t))} ${r.par}`
   return t
 }
 

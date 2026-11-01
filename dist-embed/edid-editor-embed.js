@@ -11598,7 +11598,14 @@ function decodeDtd(b) {
 //#endregion
 //#region src/lib/timing/types.ts
 var hTotal = (t) => t.hActive + t.hFront + t.hSync + t.hBack;
+/** The vertical total as stored: for an interlaced mode, one field less its half line. */
 var vTotal = (t) => t.vActive + t.vFront + t.vSync + t.vBack;
+/** Lines a field really takes: 562.5 for 1080i, where `vTotal` says 562. */
+var fieldLines = (t) => vTotal(t) + (t.interlaced ? .5 : 0);
+/** Picture height: 1080 for 1080i, where `vActive` holds the field's 540. */
+var frameHeight = (t) => t.interlaced ? t.vActive * 2 : t.vActive;
+/** Lines a frame takes, blanking included: 1125 for 1080i, as CTA-861 lists it. */
+var frameLines = (t) => t.interlaced ? fieldLines(t) * 2 : vTotal(t);
 /** Line rate in Hz. */
 var hFreq = (t) => t.pixelClockHz / hTotal(t);
 /**
@@ -11608,8 +11615,11 @@ var hFreq = (t) => t.pixelClockHz / hTotal(t);
 * every spec sheet and every operator means by "1080i60". The frame rate is half
 * of it. Getting this backwards silently halves or doubles every bandwidth
 * number downstream, so the two are never conflated.
+*
+* It divides by `fieldLines`, half line included. Divide by `vTotal` and VIC 5,
+* which is exactly 60 fields a second, comes out 60.053 and is labelled 60.05.
 */
-var vFreq = (t) => hFreq(t) / vTotal(t);
+var vFreq = (t) => hFreq(t) / fieldLines(t);
 /** Frames per second — half the field rate when interlaced. */
 var frameRate = (t) => t.interlaced ? vFreq(t) / 2 : vFreq(t);
 /** A short human label: "1920x1080p60" / "1920x1080i59.94". */
@@ -11617,7 +11627,7 @@ function timingLabel(t) {
 	const r = vFreq(t);
 	const whole = Math.round(r);
 	const text = Math.abs(r - whole) < .01 ? String(whole) : r.toFixed(2);
-	return `${t.hActive}x${t.vActive}${t.interlaced ? "i" : "p"}${text}`;
+	return `${t.hActive}x${frameHeight(t)}${t.interlaced ? "i" : "p"}${text}`;
 }
 var isDisplayIdV2 = (version) => version >= 32;
 /** DisplayID's aspect ratio enum, bits 6-4 of the flags byte. */
@@ -13296,7 +13306,7 @@ function cvt(hActive, vActive, opts) {
 		hFront: hFrontPorch,
 		hSync,
 		hBack: hBackPorch,
-		vActive: interlaced ? vActive : vLines + marginLines * 2,
+		vActive: vLines + marginLines * 2,
 		vFront: MIN_V_PORCH,
 		vSync,
 		vBack: vBackPorch,
@@ -13321,16 +13331,15 @@ function cvtRb(hActive, vActive, opts) {
 	const hTotalPixels = hPixels + RB_H_BLANK;
 	const clockRaw = refreshHz * vTotalLines * hTotalPixels;
 	const pixelClockHz = Math.floor(clockRaw / CLOCK_STEP_HZ) * CLOCK_STEP_HZ;
-	const vBack = vBlankLines - RB_V_FPORCH - vSync;
 	return {
 		hActive: hPixels,
 		hFront: 48,
 		hSync: RB_H_SYNC,
 		hBack: 80,
-		vActive: interlaced ? vActive : vLines,
+		vActive: vLines,
 		vFront: RB_V_FPORCH,
 		vSync,
-		vBack,
+		vBack: vBlankLines - RB_V_FPORCH - vSync,
 		pixelClockHz,
 		interlaced,
 		hSyncPositive: true,
@@ -13360,7 +13369,7 @@ function cvtRb2(hActive, vActive, opts) {
 		hFront: RB2_H_FRONT,
 		hSync: RB2_H_SYNC,
 		hBack: 40,
-		vActive: interlaced ? vActive : vLines,
+		vActive: vLines,
 		vFront: RB2_V_FPORCH,
 		vSync: RB2_V_SYNC,
 		vBack: vBlankLines - RB2_V_FPORCH - RB2_V_SYNC,
@@ -13412,7 +13421,7 @@ function gtf(hActive, vActive, opts) {
 		hFront: hBlank - hSync - hBack,
 		hSync,
 		hBack,
-		vActive: interlaced ? vActive : vLines,
+		vActive: vLines,
 		vFront: MIN_PORCH,
 		vSync: V_SYNC_RQD,
 		vBack: vBackPorch,
@@ -13885,11 +13894,7 @@ function build(r) {
 		hSyncPositive: r.hp,
 		vSyncPositive: r.vp
 	};
-	const hT = r.h + r.hf + r.hs + r.hb;
-	const vT = r.v + r.vf + r.vs + r.vb;
-	const rate = r.clk * 1e3 / hT / vT;
-	const disp = r.i ? r.v * 2 : r.v;
-	t.name = `VIC ${r.vic} — ${r.h}x${disp}${r.i ? "i" : "p"}${Math.round(rate)} ${r.par}`;
+	t.name = `VIC ${r.vic} — ${r.h}x${frameHeight(t)}${r.i ? "i" : "p"}${Math.round(vFreq(t))} ${r.par}`;
 	return t;
 }
 var CTA_TIMINGS = ROWS$1.map(build);
@@ -14431,7 +14436,7 @@ function solveTiming(req) {
 		pixelClockHz: t.pixelClockHz * 1e3 / 1001
 	} : t;
 	if (standard === "cta" || standard === "manual") {
-		const hit = CTA_TIMINGS.find((c) => c.hActive === hActive && (c.interlaced ? c.vActive * 2 : c.vActive) === vActive && c.interlaced === interlaced && matchesRate(vFreq(c), refreshHz));
+		const hit = CTA_TIMINGS.find((c) => c.hActive === hActive && frameHeight(c) === vActive && c.interlaced === interlaced && matchesRate(vFreq(c), refreshHz));
 		if (hit) {
 			if (req.fractional && !hit.hasFractional) notes.push(`VIC ${hit.vic} has no 1000/1001 variant in CTA-861 — the fractional rate is written as a detailed timing only.`);
 			return {
@@ -14454,14 +14459,14 @@ function solveTiming(req) {
 		}
 	}
 	if (standard === "dmt" || standard === "manual") {
-		const hit = DMT_TIMINGS.find((d) => d.hActive === hActive && d.vActive === vActive && matchesRate(vFreq(d), refreshHz));
+		const hit = DMT_TIMINGS.find((d) => d.interlaced === interlaced && d.hActive === hActive && d.vActive === vActive && matchesRate(vFreq(d), refreshHz));
 		if (hit) return {
 			timing: applyFraction(hit),
 			standard: "dmt",
 			notes
 		};
 		if (standard === "dmt") {
-			notes.push(`${hActive}x${vActive}@${refreshHz} is not in the DMT table. Fell back to CVT.`);
+			notes.push(interlaced ? "DMT has no interlaced modes. Fell back to CVT." : `${hActive}x${vActive}@${refreshHz} is not in the DMT table. Fell back to CVT.`);
 			return {
 				timing: applyFraction(cvt(hActive, vActive, {
 					refreshHz,
@@ -14729,7 +14734,7 @@ function edidAroundTiming(timing, opts) {
 	};
 }
 function aspectFor(t) {
-	const r = t.hActive / t.vActive;
+	const r = t.hActive / frameHeight(t);
 	const table = [
 		[1, "1:1"],
 		[5 / 4, "5:4"],
@@ -16323,6 +16328,7 @@ function TimingEditor({ t, onChange }) {
 			}),
 			/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Num, {
 				label: "V active",
+				hint: t.interlaced ? "lines per field" : void 0,
 				value: t.vActive,
 				onChange: (vActive) => set({ vActive })
 			}),
@@ -16394,7 +16400,7 @@ function TimingEditor({ t, onChange }) {
 				children: [
 					hTotal(t),
 					" x ",
-					vTotal(t),
+					frameLines(t),
 					" raster · ",
 					(hFreq(t) / 1e3).toFixed(2),
 					" kHz ·",
@@ -17524,7 +17530,7 @@ function LinkSummary({ timing, signal }) {
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
 						k: "Raster",
-						v: `${hTotal(timing)} x ${vTotal(timing)}`
+						v: `${hTotal(timing)} x ${frameLines(timing)}`
 					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Stat, {
 						k: "Line rate",
@@ -18693,7 +18699,7 @@ function evaluateDevice(d, t, s) {
 	if (d.minRefreshHz !== void 0 && rate < d.minRefreshHz - .01) warnings.push(`${rate.toFixed(2)} Hz is below the documented ${d.minRefreshHz} Hz minimum.`);
 	if (d.maxRefreshHz !== void 0 && rate > d.maxRefreshHz + .01) warnings.push(`${rate.toFixed(2)} Hz exceeds the documented ${d.maxRefreshHz} Hz maximum.`);
 	if (d.maxHActive !== void 0 && t.hActive > d.maxHActive) warnings.push(`${t.hActive} px wide exceeds the documented ${d.maxHActive} px maximum.`);
-	if (d.namedFormats?.length && !d.namedFormats.some((f) => t.hActive <= f.width && t.vActive <= f.height)) warnings.push(`${t.hActive} × ${t.vActive} is not a format ${d.vendor} names for these inputs (${d.namedFormats.map((f) => f.label).join("; ")}), so it may not be accepted. Untested here.`);
+	if (d.namedFormats?.length && !d.namedFormats.some((f) => t.hActive <= f.width && frameHeight(t) <= f.height)) warnings.push(`${t.hActive} × ${frameHeight(t)} is not a format ${d.vendor} names for these inputs (${d.namedFormats.map((f) => f.label).join("; ")}), so it may not be accepted. Untested here.`);
 	const modes = d.capacityModes.map((m) => checkMode(m, t, s));
 	const working = modes.filter((m) => m.ok);
 	if (working.length === 0) return {

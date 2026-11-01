@@ -73,7 +73,8 @@ export function gtf(hActive: number, vActive: number, opts: GtfOptions): Timing 
     hFront,
     hSync,
     hBack,
-    vActive: interlaced ? vActive : vLines,
+    // One field's lines when interlaced, as in cvt.ts.
+    vActive: vLines,
     vFront: MIN_PORCH,
     vSync: V_SYNC_RQD,
     vBack: vBackPorch,

@@ -126,7 +126,9 @@ export function cvt(hActive: number, vActive: number, opts: CvtOptions): Timing 
     hFront: hFrontPorch,
     hSync,
     hBack: hBackPorch,
-    vActive: interlaced ? vActive : vLines + marginLines * 2,
+    // One field's lines when interlaced, like the porches beside it and like a DTD.
+    // The frame height here, with per-field porches, is a 30 Hz mode called 1080i60.
+    vActive: vLines + marginLines * 2,
     vFront: MIN_V_PORCH,
     vSync,
     vBack: vBackPorch,
@@ -167,7 +169,7 @@ export function cvtRb(hActive: number, vActive: number, opts: CvtOptions): Timin
     hFront: 48,
     hSync: RB_H_SYNC,
     hBack: RB_H_BLANK - 48 - RB_H_SYNC,
-    vActive: interlaced ? vActive : vLines,
+    vActive: vLines,
     vFront: RB_V_FPORCH,
     vSync,
     vBack,
@@ -210,7 +212,7 @@ export function cvtRb2(hActive: number, vActive: number, opts: CvtOptions): Timi
     hFront: RB2_H_FRONT,
     hSync: RB2_H_SYNC,
     hBack: RB2_H_BLANK - RB2_H_FRONT - RB2_H_SYNC,
-    vActive: interlaced ? vActive : vLines,
+    vActive: vLines,
     vFront: RB2_V_FPORCH,
     vSync: RB2_V_SYNC,
     vBack: vBlankLines - RB2_V_FPORCH - RB2_V_SYNC,

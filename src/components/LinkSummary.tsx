@@ -8,7 +8,7 @@ import {
   hdmiRequirement,
 } from '../lib/link.ts'
 import type { Timing } from '../lib/timing/types.ts'
-import { frameRate, hFreq, hTotal, vFreq, vTotal } from '../lib/timing/types.ts'
+import { frameLines, frameRate, hFreq, hTotal, vFreq } from '../lib/timing/types.ts'
 import { Panel, Stat } from './ui.tsx'
 
 /**
@@ -32,7 +32,7 @@ export function LinkSummary({ timing, signal }: { timing: Timing; signal: Signal
     <Panel title="Signal cost and required interface">
       <div className="stats">
         <Stat k="Pixel clock" v={formatHz(timing.pixelClockHz)} />
-        <Stat k="Raster" v={`${hTotal(timing)} x ${vTotal(timing)}`} />
+        <Stat k="Raster" v={`${hTotal(timing)} x ${frameLines(timing)}`} />
         <Stat k="Line rate" v={`${(hFreq(timing) / 1000).toFixed(2)} kHz`} />
         <Stat
           k={timing.interlaced ? 'Field rate' : 'Refresh'}

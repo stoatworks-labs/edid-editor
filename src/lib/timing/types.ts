@@ -4,6 +4,11 @@
  *
  * Everything else a person wants to see (totals, line rate, refresh, bandwidth)
  * is derived from these — never stored alongside them, so the two can't drift.
+ *
+ * An interlaced mode states ONE FIELD, as a DTD does: 1080i is vActive 540, with
+ * the porches of each field. Every field also carries half a line that no field
+ * can state — 1080i's 1125-line frame is two fields of 562.5, stored as 562. The
+ * half line is implied by `interlaced`, and `fieldLines` is where it comes back.
  */
 export interface Timing {
   hActive: number
@@ -41,7 +46,17 @@ export interface NamedTiming extends Timing {
 }
 
 export const hTotal = (t: Timing) => t.hActive + t.hFront + t.hSync + t.hBack
+/** The vertical total as stored: for an interlaced mode, one field less its half line. */
 export const vTotal = (t: Timing) => t.vActive + t.vFront + t.vSync + t.vBack
+
+/** Lines a field really takes: 562.5 for 1080i, where `vTotal` says 562. */
+export const fieldLines = (t: Timing) => vTotal(t) + (t.interlaced ? 0.5 : 0)
+
+/** Picture height: 1080 for 1080i, where `vActive` holds the field's 540. */
+export const frameHeight = (t: Timing) => (t.interlaced ? t.vActive * 2 : t.vActive)
+
+/** Lines a frame takes, blanking included: 1125 for 1080i, as CTA-861 lists it. */
+export const frameLines = (t: Timing) => (t.interlaced ? fieldLines(t) * 2 : vTotal(t))
 
 /** Line rate in Hz. */
 export const hFreq = (t: Timing) => t.pixelClockHz / hTotal(t)
@@ -53,8 +68,11 @@ export const hFreq = (t: Timing) => t.pixelClockHz / hTotal(t)
  * every spec sheet and every operator means by "1080i60". The frame rate is half
  * of it. Getting this backwards silently halves or doubles every bandwidth
  * number downstream, so the two are never conflated.
+ *
+ * It divides by `fieldLines`, half line included. Divide by `vTotal` and VIC 5,
+ * which is exactly 60 fields a second, comes out 60.053 and is labelled 60.05.
  */
-export const vFreq = (t: Timing) => hFreq(t) / vTotal(t)
+export const vFreq = (t: Timing) => hFreq(t) / fieldLines(t)
 
 /** Frames per second — half the field rate when interlaced. */
 export const frameRate = (t: Timing) => (t.interlaced ? vFreq(t) / 2 : vFreq(t))
@@ -85,5 +103,5 @@ export function timingLabel(t: Timing): string {
   // 59.94 and friends are 1000/1001 of a whole rate; show two decimals only
   // when the mode really is fractional, not because of float noise.
   const text = Math.abs(r - whole) < 0.01 ? String(whole) : r.toFixed(2)
-  return `${t.hActive}x${t.vActive}${t.interlaced ? 'i' : 'p'}${text}`
+  return `${t.hActive}x${frameHeight(t)}${t.interlaced ? 'i' : 'p'}${text}`
 }

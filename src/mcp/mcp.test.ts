@@ -137,11 +137,15 @@ describe('the tools ask the library what the page asks', () => {
     const wide = (await client().call('solve_timing', { width: 8192, height: 1080, refreshHz: 60 })).json
     expect(wide.timing.asDtd).not.toBe('fits')
     const i = (await client().call('solve_timing', { width: 1920, height: 1080, refreshHz: 60, interlaced: true })).json
-    // The field rate, not the frame rate. 60.05 rather than 60 because the library counts
-    // 562 lines a field, not 562.5; the page shows the same.
-    expect(i).toMatchObject({ vic: 5, timing: { interlaced: true } })
-    expect(i.timing.fieldRateHz).toBeCloseTo(60, 0)
-    expect(i.timing.frameRateHz).toBeCloseTo(i.timing.fieldRateHz / 2, 2)
+    // The field rate, not the frame rate, and heights and rasters by the frame, as the
+    // server's instructions promise; only the porches are per field.
+    expect(i).toMatchObject({
+      vic: 5,
+      timing: {
+        label: '1920x1080i60', interlaced: true, active: [1920, 1080], raster: [2200, 1125],
+        vertical: { perField: true, fieldActive: 540 }, fieldRateHz: 60, frameRateHz: 30,
+      },
+    })
   })
 
   it('costs the link as the link panel does', async () => {

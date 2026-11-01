@@ -50,6 +50,14 @@ src/mcp/           the MCP server: the page's modes and panels as tools, over
 - **`vFreq()` is the FIELD rate for interlaced modes**, not the frame rate.
   `frameRate()` is the other one. Conflating them silently halves or doubles
   every bandwidth number downstream.
+- **An interlaced `Timing` is one field, half line implied.** `vActive` and the
+  porches are per field, as a DTD stores them: 1080i is 540 lines, and its
+  1125-line frame is two fields of 562.5, stored as 562. `vFreq()` divides by
+  `fieldLines()`, which puts the half line back; divide by `vTotal()` and VIC 5
+  reads 60.053 Hz. The generators take the frame height and hand back a field —
+  CVT once returned the frame height with per-field porches, a 30 Hz "1080i60".
+  Show a person `frameHeight()` and `frameLines()` (1080, 2200 x 1125), never
+  `vActive` and `vTotal()`.
 - **A DTD's limits are not just the clock.** `dtdLimit()` checks the 12-bit
   active/blanking fields and the 10- and 6-bit porch fields too. 8192x1080 @60
   has an unremarkable 551 MHz clock and still cannot be a DTD. This was a real
@@ -126,7 +134,7 @@ src/mcp/           the MCP server: the page's modes and panels as tools, over
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 162 tests, 16 of them
+  fixture tile) saves back byte for byte when not edited. 178 tests, 16 of them
   the MCP server's, which check it against the library asked directly.
 
 **Assumed, and NOT verified:**

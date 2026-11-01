@@ -321,3 +321,32 @@ bpc: 144 of 219 changed the same way, 99 VIC-only and 45 with DisplayID.
 
 LivePremier Plus vendors the embed build, so a change here goes there too: `npm run
 build:embed`, commit `dist-embed/`, then its `npm run sync:edid-editor`.
+
+**Interlaced modes counted their fields wrong, fixed 2026-11-01.** Found while building the
+MCP server: `solve_timing` gave 1080i60 as 60.053 Hz and the page labelled it
+`1920x540i60.05`. Three bugs from one convention, that an interlaced `Timing` holds one field
+with its half line implied:
+
+- `vFreq` divided by the stored field (562 lines) rather than the real one (562.5), so VIC 5
+  read 60.053 and VIC 20 50.044. The embed's own fractional test (`> 0.01` off whole) then
+  marked VIC 5 as a 1000/1001 rate.
+- `timingLabel`, the CTA match, the capability check's format sizes and DisplayID's aspect
+  read `vActive` as the picture height, which for 1080i is 540.
+- CVT, CVT-RB, CVT-RB2 and GTF computed their clocks over fields but stored the frame height
+  next to per-field porches. `build_edid` with any of them and interlaced on wrote a DTD of
+  1080-line fields at about 30 Hz, and a range descriptor that shut 60 out.
+
+Separately, an interlaced request for a DMT size (standard `dmt`, or automatic) got the
+progressive DMT mode back with no note, because the lookup never checked `interlaced`. DMT has
+no interlaced modes, so it now falls through.
+
+Over 7,700 simple-mode builds (25 sizes, 11 rates, all 7 standards, whole and 1000/1001,
+progressive and interlaced, default signal) against ba3b342: all 3,804 progressive builds that
+encode are byte-identical, and 3,838 of the 3,844 interlaced ones changed. The six that did not
+are the fractional 1080i VIC builds, whose range window comes out 58-61 Hz either way. Through
+the embed's `edidForTiming`, every CTA and DMT table timing at 8, 10 and 12 bpc: 165 identical,
+and only VIC 5 and VIC 20 changed. The page now reads 74.25 MHz, 2200 x 1125, 60.000 Hz fields
+and 30.000 Hz frames for 1080i60. The tests pin VIC 5 and 20 to CTA-861's frame totals and
+exact rates, and fail if either bug is put back.
+
+LivePremier Plus vendors the embed build, so its `npm run sync:edid-editor` is due again.

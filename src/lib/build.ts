@@ -8,7 +8,7 @@ import { gtf } from './timing/gtf.ts'
 import { CTA_TIMINGS } from './timing/cta.ts'
 import { DMT_TIMINGS } from './timing/dmt.ts'
 import type { Timing, TimingStandard } from './timing/types.ts'
-import { hFreq, hTotal, timingLabel, vFreq } from './timing/types.ts'
+import { frameHeight, hFreq, hTotal, timingLabel, vFreq } from './timing/types.ts'
 
 export interface SimpleRequest {
   name: string
@@ -94,7 +94,7 @@ export function solveTiming(req: SimpleRequest): { timing: Timing; standard: Tim
     const hit = CTA_TIMINGS.find(
       (c) =>
         c.hActive === hActive &&
-        (c.interlaced ? c.vActive * 2 : c.vActive) === vActive &&
+        frameHeight(c) === vActive &&
         c.interlaced === interlaced &&
         matchesRate(vFreq(c), refreshHz),
     )
@@ -116,12 +116,18 @@ export function solveTiming(req: SimpleRequest): { timing: Timing; standard: Tim
   }
 
   if (standard === 'dmt' || standard === 'manual') {
+    // The table is progressive throughout, so an interlaced request never matches it;
+    // without the check it got the progressive mode back, with no note.
     const hit = DMT_TIMINGS.find(
-      (d) => d.hActive === hActive && d.vActive === vActive && matchesRate(vFreq(d), refreshHz),
+      (d) => d.interlaced === interlaced && d.hActive === hActive && d.vActive === vActive && matchesRate(vFreq(d), refreshHz),
     )
     if (hit) return { timing: applyFraction(hit), standard: 'dmt', notes }
     if (standard === 'dmt') {
-      notes.push(`${hActive}x${vActive}@${refreshHz} is not in the DMT table. Fell back to CVT.`)
+      notes.push(
+        interlaced
+          ? 'DMT has no interlaced modes. Fell back to CVT.'
+          : `${hActive}x${vActive}@${refreshHz} is not in the DMT table. Fell back to CVT.`,
+      )
       return { timing: applyFraction(cvt(hActive, vActive, { refreshHz, interlaced })), standard: 'cvt', notes }
     }
   }
@@ -383,7 +389,7 @@ export function edidAroundTiming(timing: Timing, opts: TimingEdidOptions): Build
 }
 
 function aspectFor(t: Timing): string {
-  const r = t.hActive / t.vActive
+  const r = t.hActive / frameHeight(t)
   const table: [number, string][] = [
     [1, '1:1'],
     [5 / 4, '5:4'],

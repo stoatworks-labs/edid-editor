@@ -27,7 +27,7 @@ import { DEFAULT_SIGNAL, bitsPerPixel, dpRequirement, dviRequirement, hdmiRequir
 import { DEFAULT_MOSAIC, checkMosaic, mosaicArchive, tileSignal, tryMosaic, type MosaicRequest, type MosaicResult } from '../lib/mosaic.ts'
 import { displayName, primaryTiming, setDisplayName } from '../lib/primary.ts'
 import { ctaByVic } from '../lib/timing/cta.ts'
-import { frameRate, hFreq, hTotal, timingLabel, vFreq, vTotal, type Timing, type TimingStandard } from '../lib/timing/types.ts'
+import { frameHeight, frameLines, frameRate, hFreq, hTotal, timingLabel, vFreq, type Timing, type TimingStandard } from '../lib/timing/types.ts'
 import { ToolError } from './protocol.ts'
 
 export type Open =
@@ -53,16 +53,23 @@ export const HARDWARE_CAVEAT =
 
 const mhz = (hz: number) => +(hz / 1e6).toFixed(4)
 
-/** A timing as the link panel states it, plus what the timing table and the DTD limit say. */
+/**
+ * A timing as the link panel states it, plus what the timing table and the DTD limit say.
+ * Active and raster are whole frames, as the instructions promise; an interlaced mode's
+ * porches are per field, because that is all a DTD can state.
+ */
 export function timingReport(t: Timing) {
   return {
     label: timingLabel(t),
-    active: [t.hActive, t.vActive],
+    active: [t.hActive, frameHeight(t)],
     interlaced: t.interlaced,
     pixelClockMHz: mhz(t.pixelClockHz),
-    raster: [hTotal(t), vTotal(t)],
+    raster: [hTotal(t), frameLines(t)],
     horizontal: { front: t.hFront, sync: t.hSync, back: t.hBack, syncPositive: t.hSyncPositive },
-    vertical: { front: t.vFront, sync: t.vSync, back: t.vBack, syncPositive: t.vSyncPositive },
+    vertical: {
+      ...(t.interlaced ? { perField: true, fieldActive: t.vActive } : {}),
+      front: t.vFront, sync: t.vSync, back: t.vBack, syncPositive: t.vSyncPositive,
+    },
     lineRateKHz: +(hFreq(t) / 1000).toFixed(3),
     [t.interlaced ? 'fieldRateHz' : 'refreshHz']: +vFreq(t).toFixed(3),
     ...(t.interlaced ? { frameRateHz: +frameRate(t).toFixed(3) } : {}),

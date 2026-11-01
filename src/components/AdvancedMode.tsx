@@ -9,7 +9,7 @@ import { ESTABLISHED_EXTRA, ESTABLISHED_I_II, ESTABLISHED_III_MODES } from '../l
 import { emptyCta } from '../lib/edid/defaults.ts'
 import { CTA_TIMINGS } from '../lib/timing/cta.ts'
 import type { Timing } from '../lib/timing/types.ts'
-import { hFreq, hTotal, vFreq, vTotal } from '../lib/timing/types.ts'
+import { frameLines, hFreq, hTotal, vFreq } from '../lib/timing/types.ts'
 import { Check, Num, Panel, Pick, Text } from './ui.tsx'
 
 type Patch = (e: Edid) => void
@@ -69,7 +69,7 @@ function TimingEditor({ t, onChange }: { t: Timing; onChange: (t: Timing) => voi
         <Num label="H front porch" value={t.hFront} onChange={(hFront) => set({ hFront })} />
         <Num label="H sync width" value={t.hSync} onChange={(hSync) => set({ hSync })} />
         <Num label="H back porch" value={t.hBack} onChange={(hBack) => set({ hBack })} />
-        <Num label="V active" value={t.vActive} onChange={(vActive) => set({ vActive })} />
+        <Num label="V active" hint={t.interlaced ? 'lines per field' : undefined} value={t.vActive} onChange={(vActive) => set({ vActive })} />
         <Num label="V front porch" value={t.vFront} onChange={(vFront) => set({ vFront })} />
         <Num label="V sync width" value={t.vSync} onChange={(vSync) => set({ vSync })} />
         <Num label="V back porch" value={t.vBack} onChange={(vBack) => set({ vBack })} />
@@ -90,7 +90,7 @@ function TimingEditor({ t, onChange }: { t: Timing; onChange: (t: Timing) => voi
           <Check label="+V sync" checked={t.vSyncPositive} onChange={(vSyncPositive) => set({ vSyncPositive })} />
         </div>
         <div className="note" style={{ alignSelf: 'flex-end', paddingBottom: 6 }}>
-          {hTotal(t)} x {vTotal(t)} raster · {(hFreq(t) / 1000).toFixed(2)} kHz ·{' '}
+          {hTotal(t)} x {frameLines(t)} raster · {(hFreq(t) / 1000).toFixed(2)} kHz ·{' '}
           {vFreq(t).toFixed(3)} Hz
         </div>
       </div>

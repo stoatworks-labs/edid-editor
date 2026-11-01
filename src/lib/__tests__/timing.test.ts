@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { cvt, cvtRb, cvtRb2 } from '../timing/cvt.ts'
 import { gtf } from '../timing/gtf.ts'
 import { DMT_TIMINGS, dmtByCode } from '../timing/dmt.ts'
-import { CTA_TIMINGS, ctaByVic } from '../timing/cta.ts'
-import { hTotal, vFreq, vTotal } from '../timing/types.ts'
+import { CTA_TIMINGS, ctaByVic, fractionalVariant } from '../timing/cta.ts'
+import { frameHeight, frameLines, frameRate, hTotal, timingLabel, vFreq, vTotal } from '../timing/types.ts'
 
 /**
  * The CVT tests check our generator against PUBLISHED DMT entries, which were
@@ -120,11 +120,14 @@ describe('reference tables', () => {
     }
   })
 
-  it('every CTA entry states a self-consistent refresh rate', () => {
+  it('every CTA entry lands exactly on the rate its name gives, or its 1000/1001', () => {
+    // A VIC's rate is exact at its own clock: whole, or for VICs 1-3, listed at 25.175
+    // and 27 MHz, 60 x 1000/1001 (VIC 1 to within 0.001 Hz). Anything else is a counting
+    // error, and the interlaced half line is the one this caught: 1080i60 read 60.053.
     for (const t of CTA_TIMINGS) {
-      const rate = vFreq(t)
-      expect(rate).toBeGreaterThan(20)
-      expect(rate).toBeLessThan(130)
+      const nominal = Number(/[ip](\d+) /.exec(t.name)![1])
+      const off = Math.min(Math.abs(vFreq(t) - nominal), Math.abs(vFreq(t) - (nominal * 1000) / 1001))
+      expect(off, t.name).toBeLessThan(0.001)
     }
   })
 
@@ -144,5 +147,75 @@ describe('reference tables', () => {
     const t = ctaByVic(5)! // 1080i60
     expect(t.interlaced).toBe(true)
     expect(Math.round(vFreq(t))).toBe(60)
+  })
+})
+
+/**
+ * An interlaced Timing holds one field, as a DTD does, and every field carries half a
+ * line the field cannot state. CTA-861 lists 1080i by the frame: 74.25 MHz on 2200 x 1125
+ * (2640 x 1125 at 50) — 1125 lines, two fields of 562.5, stored as 562.
+ */
+describe('interlaced modes', () => {
+  it('VIC 5 is 1080i60: exactly 60 fields and 30 frames a second, on a 2200 x 1125 frame', () => {
+    const t = ctaByVic(5)!
+    expect(t.vActive).toBe(540)
+    expect(frameHeight(t)).toBe(1080)
+    expect(hTotal(t)).toBe(2200)
+    expect(frameLines(t)).toBe(1125)
+    // 60.053 and 30.027 when the half line is dropped.
+    expect(vFreq(t)).toBeCloseTo(60, 9)
+    expect(frameRate(t)).toBeCloseTo(30, 9)
+  })
+
+  it('VIC 20 is 1080i50: exactly 50 fields a second, on a 2640 x 1125 frame', () => {
+    const t = ctaByVic(20)!
+    expect(hTotal(t)).toBe(2640)
+    expect(frameLines(t)).toBe(1125)
+    expect(vFreq(t)).toBeCloseTo(50, 9)
+  })
+
+  it('the fractional 1080i is 59.94 fields a second', () => {
+    expect(vFreq(fractionalVariant(ctaByVic(5)!))).toBeCloseTo(60_000 / 1001, 9)
+  })
+
+  it('is labelled by the frame height and the field rate, as everyone says it', () => {
+    expect(timingLabel(ctaByVic(5)!)).toBe('1920x1080i60')
+    expect(timingLabel(ctaByVic(20)!)).toBe('1920x1080i50')
+    expect(timingLabel(fractionalVariant(ctaByVic(5)!))).toBe('1920x1080i59.94')
+    expect(ctaByVic(5)!.name).toBe('VIC 5 — 1920x1080i60 16:9')
+  })
+
+  // The generators take the FRAME height and the FIELD rate, as simple mode's form does,
+  // and must hand back one field. The frame height with a field's porches is a 1080-line
+  // field: a 30 Hz mode, labelled 1080i60 and encoded as 2160i.
+  const generators = [['CVT', cvt], ['CVT-RB', cvtRb], ['CVT-RB2', cvtRb2], ['GTF', gtf]] as const
+  for (const [name, generate] of generators) {
+    it(`${name} makes 1080i60 as 540-line fields, about 60 a second`, () => {
+      const t = generate(1920, 1080, { refreshHz: 60, interlaced: true })
+      expect(t.interlaced).toBe(true)
+      expect(t.vActive).toBe(540)
+      expect(frameHeight(t)).toBe(1080)
+      // Within the clock step: CVT's 250 kHz step lands this on 59.94, as it lands
+      // 1080p60 on 59.96.
+      expect(Math.abs(vFreq(t) - 60)).toBeLessThan(0.2)
+      expect(frameRate(t)).toBeCloseTo(vFreq(t) / 2, 9)
+    })
+  }
+
+  it('CVT-RB2 and GTF land on the field rate exactly, half line included', () => {
+    // Their clocks are computed over field + 0.5 lines, so only a rate that counts
+    // the half line agrees with them. Without it, both read 60.05.
+    for (const generate of [cvtRb2, gtf]) {
+      for (const rate of [60, 50, 59.94]) {
+        expect(vFreq(generate(1920, 1080, { refreshHz: rate, interlaced: true }))).toBeCloseTo(rate, 2)
+      }
+    }
+  })
+
+  it('an interlaced mode has the line rate of its frame-rate progressive twin', () => {
+    // 1080i60 and 1080p30 scan the same 1125 lines a thirtieth of a second each.
+    expect(ctaByVic(5)!.pixelClockHz).toBe(ctaByVic(34)!.pixelClockHz)
+    expect(hTotal(ctaByVic(5)!)).toBe(hTotal(ctaByVic(34)!))
+    expect(frameLines(ctaByVic(5)!)).toBe(vTotal(ctaByVic(34)!))
   })
 })

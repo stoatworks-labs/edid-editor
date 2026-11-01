@@ -1,7 +1,7 @@
 import type { SignalOptions } from '../link.ts'
 import { FRL_EFFICIENCY, bitsPerPixel, payloadBps, tmdsCharacterRateHz } from '../link.ts'
 import type { Timing } from '../timing/types.ts'
-import { vFreq } from '../timing/types.ts'
+import { frameHeight, vFreq } from '../timing/types.ts'
 import type { CapacityMode, Connector, Device } from './types.ts'
 import { DEVICE_LIST } from './devices.ts'
 
@@ -145,9 +145,9 @@ export function evaluateDevice(d: Device, t: Timing, s: SignalOptions): DeviceVe
   if (d.maxHActive !== undefined && t.hActive > d.maxHActive) {
     warnings.push(`${t.hActive} px wide exceeds the documented ${d.maxHActive} px maximum.`)
   }
-  if (d.namedFormats?.length && !d.namedFormats.some((f) => t.hActive <= f.width && t.vActive <= f.height)) {
+  if (d.namedFormats?.length && !d.namedFormats.some((f) => t.hActive <= f.width && frameHeight(t) <= f.height)) {
     warnings.push(
-      `${t.hActive} × ${t.vActive} is not a format ${d.vendor} names for these inputs ` +
+      `${t.hActive} × ${frameHeight(t)} is not a format ${d.vendor} names for these inputs ` +
         `(${d.namedFormats.map((f) => f.label).join('; ')}), so it may not be accepted. Untested here.`,
     )
   }
