@@ -350,3 +350,16 @@ and 30.000 Hz frames for 1080i60. The tests pin VIC 5 and 20 to CTA-861's frame 
 exact rates, and fail if either bug is put back.
 
 LivePremier Plus vendors the embed build, so its `npm run sync:edid-editor` is due again.
+
+**Simple mode sets the product code and serial number, since 2026-11-02.** A prospective Cuckoo
+customer asked for a way to name several dummy plugs so the OS sees them apart, remembering the
+field as "the Product ID". The name was already there (descriptor 3, 13 characters). What was
+missing is what a computer tells displays apart by: every simple build went out as SWK, product
+0x0001, serial 1, so two that differed only in name could be one display to a Mac. Advanced mode
+always had both fields. Simple mode and `build_edid` now take them too, defaulting to 1 and 1, so
+a build that leaves them alone is byte-identical to before (a test pins bytes 8-15). A typed value
+the field can't hold is clamped with a note, not wrapped by the encoder (70000 would go out as
+4464). The embed's `edidForTiming` doesn't pass them, so its output is unchanged.
+
+The embed rebuild for this also carries React 19.3.0 → 19.3.1 from the earlier dependency bump,
+which had not rebuilt `dist-embed/`. LivePremier Plus's `npm run sync:edid-editor` is due again.

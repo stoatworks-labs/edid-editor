@@ -134,11 +134,16 @@ src/mcp/           the MCP server: the page's modes and panels as tools, over
   cases (2 x 1 and 2 x 2, 3840-12288 wide, 8- and 10-bit, fractional rate).
 - Every EDID the tool builds round-trips encode -> decode with no loss and a
   valid checksum. A real one read in (the PixelHue Q8 CTA block, every mosaic
-  fixture tile) saves back byte for byte when not edited. 178 tests, 16 of them
+  fixture tile) saves back byte for byte when not edited. 183 tests, 17 of them
   the MCP server's, which check it against the library asked directly.
 
 **Assumed, and NOT verified:**
 
+- **That a Mac takes two builds differing only in name for one display.** It is
+  why simple mode offers the product code and serial number. It rests on macOS
+  keying a display by vendor, product code and serial number, and on reports of
+  identical monitors swapping places; nobody has put two of this tool's builds
+  into one Mac.
 - **No EDID produced by this tool has been fed to any hardware.** Not one. The
   bytes are well-formed and self-consistent; whether a given box likes them is
   untested. Mosaic mode is second-hand evidence only: identical bytes bonded on

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildEdid, edidAroundTiming, vicFor } from '../build.ts'
+import { DEFAULT_REQUEST, buildEdid, edidAroundTiming, vicFor } from '../build.ts'
 import type { SimpleRequest } from '../build.ts'
 import { DEFAULT_SIGNAL } from '../link.ts'
 import { encodeEdid } from '../edid/encode.ts'
@@ -20,6 +20,8 @@ const req = (o: Partial<SimpleRequest> = {}): SimpleRequest => ({
   interlaced: false,
   fractional: false,
   signal: { ...DEFAULT_SIGNAL },
+  productCode: 1,
+  serialNumber: 1,
   ...o,
 })
 
@@ -321,6 +323,35 @@ describe('edidAroundTiming — a timing somebody already chose', () => {
     const a = buildEdid(req())
     const b = edidAroundTiming(a.timing, { name: 'Test', signal: { ...DEFAULT_SIGNAL }, standard: a.resolvedStandard, vic: a.vic })
     expect([...encodeEdid(b.edid)]).toEqual([...encodeEdid(a.edid)])
+  })
+})
+
+describe('product code and serial number', () => {
+  it('leave a build that does not change them as it always was', () => {
+    const bytes = encodeEdid(buildEdid(DEFAULT_REQUEST).edid)
+    // SWK, product 0x0001, serial 1: blankEdid's.
+    expect([...bytes.slice(8, 16)]).toEqual([0x4e, 0xeb, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00])
+    expect(buildEdid(DEFAULT_REQUEST).notes.filter((n) => /product code|serial number/.test(n))).toEqual([])
+  })
+
+  it('change only their own bytes and the checksum', () => {
+    const one = encodeEdid(buildEdid(req()).edid)
+    const two = encodeEdid(buildEdid(req({ productCode: 0x1234, serialNumber: 0x01020304 })).edid)
+    expect([...one].flatMap((b, i) => (b === two[i] ? [] : [i]))).toEqual([10, 11, 12, 13, 14, 15, 127])
+    expect([...two.slice(10, 16)]).toEqual([0x34, 0x12, 0x04, 0x03, 0x02, 0x01])
+  })
+
+  it('read back as asked at the top of their range', () => {
+    const { edid } = decodeEdid(encodeEdid(buildEdid(req({ productCode: 65535, serialNumber: 4294967295 })).edid))
+    expect([edid.productCode, edid.serialNumber]).toEqual([65535, 4294967295])
+  })
+
+  it('hold what the field can and say so, rather than wrap', () => {
+    const r = buildEdid(req({ productCode: 70000, serialNumber: -3 }))
+    expect([r.edid.productCode, r.edid.serialNumber]).toEqual([65535, 0])
+    expect(r.notes).toContain('The product code is a whole number from 0 to 65535, so 70000 went out as 65535.')
+    expect(r.notes).toContain('The serial number is a whole number from 0 to 4294967295, so -3 went out as 0.')
+    expect(buildEdid(req({ serialNumber: 2.5 })).edid.serialNumber).toBe(2)
   })
 })
 

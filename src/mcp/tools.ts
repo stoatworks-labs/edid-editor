@@ -17,6 +17,7 @@ import type { Status } from '../lib/capability/evaluate.ts'
 import type { ByteFormat } from '../lib/hexdump.ts'
 import { type JsonSchema, type ServerInfo, type Tool } from './protocol.ts'
 import {
+  type BuildArgs,
   type Change,
   type ModeArgs,
   type Session,
@@ -137,9 +138,17 @@ export function edidTools(state: Session = newSession()): Tool[] {
           ...MODE,
           name: { type: 'string', description: 'What every input menu shows. 13 characters at most. Default UHD-2160p60.' },
           signal: { ...SIGNAL, description: 'The signal the EDID is built for. Fields left out take the defaults: RGB 4:4:4, 8-bit, no DSC, no VRR.' },
+          productCode: { type: 'integer', minimum: 0, maximum: 65535, description: 'Bytes 10-11. Default 1.' },
+          serialNumber: {
+            type: 'integer',
+            minimum: 0,
+            maximum: 4294967295,
+            description:
+              'Bytes 12-15. A computer tells displays apart by manufacturer, product code and serial number, not by name, so when building several EDIDs give each its own. Default 1.',
+          },
         },
       },
-      run: (a) => build(state, a as unknown as ModeArgs & { name?: string; signal?: Partial<SignalOptions> }),
+      run: (a) => build(state, a as unknown as BuildArgs),
     },
     {
       name: 'build_mosaic',

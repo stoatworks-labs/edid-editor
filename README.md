@@ -29,7 +29,10 @@ Nothing's uploaded. There's no backend to upload it to.
 **Simple.** Type a resolution and a refresh rate, name it, press Calculate. You
 get a complete, valid EDID 1.4: the mode as a detailed timing, a range-limits
 descriptor sized to it, the name where every input menu will read it, and a
-CTA-861 extension carrying the VIC when the mode has one.
+CTA-861 extension carrying the VIC when the mode has one. Building several of
+the same thing? Give each its own serial number. A computer tells displays apart
+by maker, product code and serial number, not by name, so a Mac can take two that
+differ only in name for one display.
 
 **Advanced.** Every field. Identity, video input definition, chromaticity,
 established and standard timings, all four descriptors, the CTA-861 extension

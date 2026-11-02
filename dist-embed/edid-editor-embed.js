@@ -385,7 +385,7 @@ var require_react_production = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.useTransition = function() {
 		return ReactSharedInternals.H.useTransition();
 	};
-	exports.version = "19.3.0";
+	exports.version = "19.3.1";
 }));
 //#endregion
 //#region node_modules/react/index.js
@@ -803,7 +803,7 @@ var require_react_dom_production = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.useFormStatus = function() {
 		return ReactSharedInternals.H.useHostTransitionStatus();
 	};
-	exports.version = "19.3.0";
+	exports.version = "19.3.1";
 }));
 //#endregion
 //#region node_modules/react-dom/index.js
@@ -11358,7 +11358,7 @@ var require_react_dom_client_production = /* @__PURE__ */ __commonJSMin(((export
 		}
 	};
 	var isomorphicReactPackageVersion$jscomp$inline_2043 = React.version;
-	if ("19.3.0" !== isomorphicReactPackageVersion$jscomp$inline_2043) throw Error(formatProdErrorMessage(527, isomorphicReactPackageVersion$jscomp$inline_2043, "19.3.0"));
+	if ("19.3.1" !== isomorphicReactPackageVersion$jscomp$inline_2043) throw Error(formatProdErrorMessage(527, isomorphicReactPackageVersion$jscomp$inline_2043, "19.3.1"));
 	ReactDOMSharedInternals.findDOMNode = function(componentOrElement) {
 		var fiber = componentOrElement._reactInternals;
 		if (void 0 === fiber) {
@@ -11373,10 +11373,10 @@ var require_react_dom_client_production = /* @__PURE__ */ __commonJSMin(((export
 	};
 	var internals$jscomp$inline_2586 = {
 		bundleType: 0,
-		version: "19.3.0",
+		version: "19.3.1",
 		rendererPackageName: "react-dom",
 		currentDispatcherRef: ReactSharedInternals,
-		reconcilerVersion: "19.3.0"
+		reconcilerVersion: "19.3.1"
 	};
 	if ("undefined" !== typeof __REACT_DEVTOOLS_GLOBAL_HOOK__) {
 		var hook$jscomp$inline_2587 = __REACT_DEVTOOLS_GLOBAL_HOOK__;
@@ -14369,7 +14369,9 @@ var DEFAULT_REQUEST = {
 	standard: "manual",
 	interlaced: false,
 	fractional: false,
-	signal: { ...DEFAULT_SIGNAL }
+	signal: { ...DEFAULT_SIGNAL },
+	productCode: 1,
+	serialNumber: 1
 };
 /**
 * The standards simple mode offers, in the order it offers them. `manual` is
@@ -14548,8 +14550,21 @@ function buildEdid(req) {
 		standard,
 		vic,
 		fractional: req.fractional,
+		productCode: req.productCode,
+		serialNumber: req.serialNumber,
 		notes
 	});
+}
+/**
+* A whole number the field can hold. The page's inputs stop at the range but
+* still take a typed 70000, and the encoder would store it modulo the width:
+* product code 70000 goes out as 4464, saying nothing.
+*/
+function idField(label, wanted, max, fallback, notes) {
+	if (wanted === void 0) return fallback;
+	const held = Number.isFinite(wanted) ? Math.min(max, Math.max(0, Math.trunc(wanted))) : fallback;
+	if (held !== wanted) notes.push(`The ${label} is a whole number from 0 to ${max}, so ${wanted} went out as ${held}.`);
+	return held;
 }
 /**
 * The CTA VIC whose raster this timing is exactly, if any.
@@ -14584,6 +14599,8 @@ function edidAroundTiming(timing, opts) {
 		fractional: !!opts.fractional
 	};
 	const e = blankEdid();
+	e.productCode = idField("product code", opts.productCode, 65535, e.productCode, notes);
+	e.serialNumber = idField("serial number", opts.serialNumber, 4294967295, e.serialNumber, notes);
 	const rate = vFreq(timing);
 	const lineKHz = hFreq(timing) / 1e3;
 	const clockMHz = timing.pixelClockHz / 1e6;
@@ -15083,6 +15100,30 @@ function SimpleMode({ req, onChange, onBuild, notes }) {
 							});
 						}
 					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+					className: "grid c2",
+					style: { marginTop: 10 },
+					children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(Num, {
+						label: "Product code",
+						hint: "0-65535",
+						value: req.productCode,
+						min: 0,
+						max: 65535,
+						onChange: (productCode) => set({ productCode })
+					}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Num, {
+						label: "Serial number",
+						hint: "its own for each unit",
+						value: req.serialNumber,
+						min: 0,
+						max: 4294967295,
+						onChange: (serialNumber) => set({ serialNumber })
+					})]
+				}),
+				/* @__PURE__ */ (0, import_jsx_runtime.jsx)("div", {
+					className: "note",
+					style: { marginTop: 10 },
+					children: "A computer tells displays apart by maker, product code and serial number, not by name. Building several? Give each its own serial number, or a Mac can take two of them for one display."
 				}),
 				/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
 					className: "grid c4",

@@ -245,10 +245,16 @@ function nameFits(name: string | undefined) {
   }
 }
 
-export function build(s: Session, m: ModeArgs & { name?: string; signal?: Partial<SignalOptions> }) {
+export type BuildArgs = ModeArgs & { name?: string; signal?: Partial<SignalOptions>; productCode?: number; serialNumber?: number }
+
+export function build(s: Session, m: BuildArgs) {
   nameFits(m.name)
   const signal = { ...DEFAULT_SIGNAL, ...m.signal }
-  const r = buildEdid(request(m, m.name ?? DEFAULT_REQUEST.name, signal))
+  const r = buildEdid({
+    ...request(m, m.name ?? DEFAULT_REQUEST.name, signal),
+    productCode: m.productCode ?? DEFAULT_REQUEST.productCode,
+    serialNumber: m.serialNumber ?? DEFAULT_REQUEST.serialNumber,
+  })
   const { error } = encoded(r.edid)
   if (error) throw new ToolError(`That EDID cannot be encoded: ${error}`)
   s.open = { kind: 'edid', edid: r.edid, from: 'build_edid', issues: [], notes: r.notes }

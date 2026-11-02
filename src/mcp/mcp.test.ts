@@ -91,6 +91,8 @@ describe('protocol', () => {
     expect((await c.call('build_edid', { width: 1920, height: 1080, refreshHz: 60, signal: { bpc: 9 } })).text).toMatch(/bpc must be one of/)
     expect((await c.call('build_edid', { width: 1920, height: 1080, refreshHz: 60, standard: 'auto' })).text).toMatch(/standard must be one of "manual"/)
     expect((await c.call('build_edid', { width: 1920, height: 1080, refreshHz: 60, name: 'Fourteen chars' })).text).toMatch(/holds 13/)
+    expect((await c.call('build_edid', { width: 1920, height: 1080, refreshHz: 60, productCode: 70000 })).text).toMatch(/productCode must be at most 65535/)
+    expect((await c.call('build_edid', { width: 1920, height: 1080, refreshHz: 60, serialNumber: -1 })).text).toMatch(/serialNumber must be at least 0/)
   })
 
   it('says what to do first when nothing is open', async () => {
@@ -114,6 +116,16 @@ describe('the tools ask the library what the page asks', () => {
     const path = join(scratch(), 'pds.bin')
     expect((await c.call('export', { path })).json).toMatchObject({ bytes: 256, blocks: 2 })
     const page = encodeEdid(buildEdid(pageRequest({ name: 'PDS4K-2160p60', signal: { ...DEFAULT_SIGNAL, bpc: 10 } })).edid)
+    expect(Buffer.compare(readFileSync(path), page)).toBe(0)
+  })
+
+  it('gives a unit its own product code and serial number, as simple mode does', async () => {
+    const c = client()
+    const r = await c.call('build_edid', { width: 1920, height: 1080, refreshHz: 60, name: 'Stage L', productCode: 2, serialNumber: 7 })
+    expect(r.json).toMatchObject({ productCode: 2, serialNumber: 7 })
+    const path = join(scratch(), 'stage-l.bin')
+    await c.call('export', { path })
+    const page = encodeEdid(buildEdid(pageRequest({ name: 'Stage L', hActive: 1920, vActive: 1080, productCode: 2, serialNumber: 7 })).edid)
     expect(Buffer.compare(readFileSync(path), page)).toBe(0)
   })
 

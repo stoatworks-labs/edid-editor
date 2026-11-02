@@ -73,6 +73,22 @@ export function SimpleMode({
           />
         </div>
 
+        <div className="grid c2" style={{ marginTop: 10 }}>
+          <Num label="Product code" hint="0-65535" value={req.productCode} min={0} max={65535} onChange={(productCode) => set({ productCode })} />
+          <Num
+            label="Serial number"
+            hint="its own for each unit"
+            value={req.serialNumber}
+            min={0}
+            max={4294967295}
+            onChange={(serialNumber) => set({ serialNumber })}
+          />
+        </div>
+        <div className="note" style={{ marginTop: 10 }}>
+          A computer tells displays apart by maker, product code and serial number, not by name. Building several? Give
+          each its own serial number, or a Mac can take two of them for one display.
+        </div>
+
         <div className="grid c4" style={{ marginTop: 10 }}>
           <Num label="Width" hint="active px" value={req.hActive} min={8} max={16384} step={8} onChange={(hActive) => set({ hActive })} />
           <Num label="Height" hint="active lines" value={req.vActive} min={8} max={8192} onChange={(vActive) => set({ vActive })} />

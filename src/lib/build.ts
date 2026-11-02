@@ -20,6 +20,14 @@ export interface SimpleRequest {
   /** Use the 1000/1001 rate — 59.94 rather than 60. */
   fractional: boolean
   signal: SignalOptions
+  /**
+   * Bytes 10-11 and 12-15. A computer tells displays apart by these and the
+   * manufacturer id, not by the name: macOS keeps a display's arrangement under
+   * them, so two builds that differ only in name can be taken for one display.
+   * Building several, each wants its own serial number.
+   */
+  productCode: number
+  serialNumber: number
 }
 
 /** What simple mode opens on, and what Reset goes back to. */
@@ -32,6 +40,9 @@ export const DEFAULT_REQUEST: SimpleRequest = {
   interlaced: false,
   fractional: false,
   signal: { ...DEFAULT_SIGNAL },
+  // blankEdid's, so a build that leaves them alone is the bytes it always was.
+  productCode: 0x0001,
+  serialNumber: 1,
 }
 
 /**
@@ -167,7 +178,16 @@ export function solveTiming(req: SimpleRequest): { timing: Timing; standard: Tim
  */
 export function buildEdid(req: SimpleRequest): BuildResult {
   const { timing, standard, vic, notes } = solveTiming(req)
-  return edidAroundTiming(timing, { name: req.name, signal: req.signal, standard, vic, fractional: req.fractional, notes })
+  return edidAroundTiming(timing, {
+    name: req.name,
+    signal: req.signal,
+    standard,
+    vic,
+    fractional: req.fractional,
+    productCode: req.productCode,
+    serialNumber: req.serialNumber,
+    notes,
+  })
 }
 
 export interface TimingEdidOptions {
@@ -178,7 +198,22 @@ export interface TimingEdidOptions {
   /** The CTA VIC the timing is, when it is one — `vicFor` finds it. */
   vic?: number
   fractional?: boolean
+  /** blankEdid's 0x0001 and 1 when left out. See `SimpleRequest`. */
+  productCode?: number
+  serialNumber?: number
   notes?: string[]
+}
+
+/**
+ * A whole number the field can hold. The page's inputs stop at the range but
+ * still take a typed 70000, and the encoder would store it modulo the width:
+ * product code 70000 goes out as 4464, saying nothing.
+ */
+function idField(label: string, wanted: number | undefined, max: number, fallback: number, notes: string[]): number {
+  if (wanted === undefined) return fallback
+  const held = Number.isFinite(wanted) ? Math.min(max, Math.max(0, Math.trunc(wanted))) : fallback
+  if (held !== wanted) notes.push(`The ${label} is a whole number from 0 to ${max}, so ${wanted} went out as ${held}.`)
+  return held
 }
 
 /**
@@ -213,6 +248,8 @@ export function edidAroundTiming(timing: Timing, opts: TimingEdidOptions): Build
   const notes = opts.notes ? [...opts.notes] : []
   const req = { name: opts.name, signal: opts.signal, fractional: !!opts.fractional }
   const e = blankEdid()
+  e.productCode = idField('product code', opts.productCode, 0xffff, e.productCode, notes)
+  e.serialNumber = idField('serial number', opts.serialNumber, 0xffffffff, e.serialNumber, notes)
 
   const rate = vFreq(timing)
   const lineKHz = hFreq(timing) / 1000
