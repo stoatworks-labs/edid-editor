@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://edid-editor.stoatworks-labs.com/sitemap.xml

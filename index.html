@@ -3,8 +3,50 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EDID Editor</title>
-    <meta name="description" content="Build, edit and check EDIDs in the browser — nothing is uploaded." />
+    <title>EDID Editor — An EDID, and which processors will take it</title>
+    <meta name="description" content="Builds an EDID from a resolution and refresh rate, or edits every field by hand, then checks it against twenty-three event processors. Free, in the browser, nothing uploaded." />
+    <link rel="canonical" href="https://edid-editor.stoatworks-labs.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Stoatworks Labs" />
+    <meta property="og:title" content="EDID Editor — An EDID, and which processors will take it" />
+    <meta property="og:description" content="Builds an EDID from a resolution and refresh rate, or edits every field by hand, then checks it against twenty-three event processors. Free, in the browser, nothing uploaded." />
+    <meta property="og:url" content="https://edid-editor.stoatworks-labs.com/" />
+    <meta property="og:image" content="https://stoatworks-labs.com/thumbs/edid-editor.png" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta property="og:image:alt" content="EDID Editor" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "@id": "https://edid-editor.stoatworks-labs.com#app",
+        "name": "EDID Editor",
+        "url": "https://edid-editor.stoatworks-labs.com",
+        "description": "Builds an EDID from a resolution and refresh rate, or edits every field by hand, then checks it against twenty-three event processors. Free, in the browser, nothing uploaded.",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Any (runs in a web browser)",
+        "isAccessibleForFree": true,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "GBP"
+        },
+        "author": {
+          "@id": "https://stoatworks-labs.com/#organization",
+          "@type": "Organization",
+          "name": "Stoatworks Labs",
+          "url": "https://stoatworks-labs.com/"
+        },
+        "publisher": {
+          "@id": "https://stoatworks-labs.com/#organization"
+        },
+        "sameAs": [
+          "https://stoatworks-labs.com/web-tools/edid-editor/",
+          "https://github.com/stoatworks-labs/edid-editor"
+        ]
+      }
+    </script>
       <link rel="manifest" href="/manifest.webmanifest" />
     <!-- iOS ignores the manifest's icons and wants a PNG of its own. -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -13,6 +55,17 @@
     <meta name="theme-color" content="#12151a" media="(prefers-color-scheme: dark)" />
   </head>
   <body>
+    <noscript>
+      <h1>EDID Editor</h1>
+      <p>Builds an EDID from a resolution and a refresh rate, or lets you edit every field of one by hand, all in the browser. Then it does the bit that usually costs an afternoon: it works out the smallest HDMI or DisplayPort version that carries the mode, and checks it against twenty-three models of event processor, answering yes, no, or which input capacity mode you'd have to go and set up first.</p>
+      <p>It needs JavaScript to run.</p>
+      <ul>
+        <li><a href="https://stoatworks-labs.com/web-tools/edid-editor/">EDID Editor on Stoatworks Labs</a></li>
+        <li><a href="https://stoatworks-labs.com/software/edid-editor/">Project page</a></li>
+        <li><a href="https://stoatworks-labs.com/software/edid-editor/guide/">User guide</a></li>
+        <li><a href="https://github.com/stoatworks-labs/edid-editor">Source code on GitHub</a></li>
+      </ul>
+    </noscript>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
     <!--

@@ -20,6 +20,8 @@ actually take it, and in which mode.
 
 Nothing's uploaded. There's no backend to upload it to.
 
+Its [page on Stoatworks Labs](https://stoatworks-labs.com/web-tools/edid-editor/) covers running it on your own server, and the [project page](https://stoatworks-labs.com/software/edid-editor/) has the user guide.
+
 ![EDID Editor building an 8192 × 1080 @ 60 EDID: the raster it needed, the signal cost, and the per-processor support table](docs/screenshots/edid-editor.png)
 
 <sub>An 8192 × 1080 @ 60 EDID built in Simple mode: the CVT-RB v2 raster it needed, a 551 MHz pixel clock that puts it past HDMI 1.4, the minimum interface per standard, and the per-processor table saying which will take it. Every row comes from the vendor's own documents, and none of it has been tried against hardware.</sub>

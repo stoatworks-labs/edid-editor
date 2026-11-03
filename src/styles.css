@@ -33,6 +33,7 @@ header.top {
 header.top h1 { font-size: 19px; margin: 0; font-weight: 620; letter-spacing: -0.01em; }
 header.top .tag { color: var(--dim); font-size: 13px; }
 header.top .ver { margin-left: auto; color: var(--dim); font-size: 12px; font-family: var(--mono); }
+header.top .ver a { color: inherit; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
 
 .tabs { display: flex; gap: 4px; margin-bottom: 16px; }
 .tabs button {

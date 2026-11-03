@@ -1,0 +1,15 @@
+# EDID Editor
+
+> An EDID, and which processors will take it
+
+Builds an EDID from a resolution and a refresh rate, or lets you edit every field of one by hand, all in the browser. Then it does the bit that usually costs an afternoon: it works out the smallest HDMI or DisplayPort version that carries the mode, and checks it against twenty-three models of event processor, answering yes, no, or which input capacity mode you'd have to go and set up first.
+
+It runs in the browser at https://edid-editor.stoatworks-labs.com/ and is free to use.
+
+## Links
+
+- [EDID Editor on Stoatworks Labs](https://stoatworks-labs.com/web-tools/edid-editor/): what it is, with links to everything else
+- [Project page](https://stoatworks-labs.com/software/edid-editor/)
+- [User guide](https://stoatworks-labs.com/software/edid-editor/guide/)
+- [Source code](https://github.com/stoatworks-labs/edid-editor)
+- [Self-hosting](https://stoatworks-labs.com/web-tools/self-hosting/): running it on your own server

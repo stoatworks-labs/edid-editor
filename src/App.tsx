@@ -129,7 +129,18 @@ export default function App({ host }: { host?: EdidHost } = {}) {
         <span className="tag">
           Build an EDID from a resolution, or edit every field — then see which processors will take it.
         </span>
-        <span className="ver">{__APP_VERSION__}</span>
+        <span className="ver">
+          {/* Not inside a host's window: there it is part of somebody else's app. */}
+          {host ? null : (
+            <>
+              <a href="https://stoatworks-labs.com/web-tools/edid-editor/" target="_blank" rel="noopener">
+                About this tool
+              </a>
+              {' · '}
+            </>
+          )}
+          {__APP_VERSION__}
+        </span>
       </header>
 
       <div className="tabs">
