@@ -1,7 +1,6 @@
-//#region \0rolldown/runtime.js
+// \0rolldown/runtime.js
 var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod, mod.exports), cb = null), mod.exports);
-//#endregion
-//#region node_modules/react/cjs/react.production.js
+// node_modules/react/cjs/react.production.js
 /**
 * @license React
 * react.production.js
@@ -387,13 +386,11 @@ var require_react_production = /* @__PURE__ */ __commonJSMin(((exports) => {
 	};
 	exports.version = "19.3.1";
 }));
-//#endregion
-//#region node_modules/react/index.js
+// node_modules/react/index.js
 var require_react = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_production();
 }));
-//#endregion
-//#region node_modules/scheduler/cjs/scheduler.production.js
+// node_modules/scheduler/cjs/scheduler.production.js
 /**
 * @license React
 * scheduler.production.js
@@ -647,13 +644,11 @@ var require_scheduler_production = /* @__PURE__ */ __commonJSMin(((exports) => {
 		};
 	};
 }));
-//#endregion
-//#region node_modules/scheduler/index.js
+// node_modules/scheduler/index.js
 var require_scheduler = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_scheduler_production();
 }));
-//#endregion
-//#region node_modules/react-dom/cjs/react-dom.production.js
+// node_modules/react-dom/cjs/react-dom.production.js
 /**
 * @license React
 * react-dom.production.js
@@ -805,8 +800,7 @@ var require_react_dom_production = /* @__PURE__ */ __commonJSMin(((exports) => {
 	};
 	exports.version = "19.3.1";
 }));
-//#endregion
-//#region node_modules/react-dom/index.js
+// node_modules/react-dom/index.js
 var require_react_dom = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function checkDCE() {
 		if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") return;
@@ -819,8 +813,7 @@ var require_react_dom = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	checkDCE();
 	module.exports = require_react_dom_production();
 }));
-//#endregion
-//#region node_modules/react-dom/cjs/react-dom-client.production.js
+// node_modules/react-dom/cjs/react-dom-client.production.js
 /**
 * @license React
 * react-dom-client.production.js
@@ -11394,8 +11387,7 @@ var require_react_dom_client_production = /* @__PURE__ */ __commonJSMin(((export
 		return new ReactDOMRoot(options);
 	};
 }));
-//#endregion
-//#region node_modules/react-dom/client.js
+// node_modules/react-dom/client.js
 var require_client = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function checkDCE() {
 		if (typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ === "undefined" || typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.checkDCE !== "function") return;
@@ -11408,8 +11400,7 @@ var require_client = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	checkDCE();
 	module.exports = require_react_dom_client_production();
 }));
-//#endregion
-//#region src/lib/edid/tables.ts
+// src/lib/edid/tables.ts
 var import_react = require_react();
 var import_client = require_client();
 /**
@@ -11529,8 +11520,7 @@ var CTA_AUDIO_RATES = [
 	176.4,
 	192
 ];
-//#endregion
-//#region src/lib/edid/decode-dtd.ts
+// src/lib/edid/decode-dtd.ts
 var SYNC_TYPES = [
 	"analog-composite",
 	"bipolar-analog",
@@ -11595,8 +11585,7 @@ function decodeDtd(b) {
 		stereo: stereoIdx === 0 ? "none" : STEREO[stereoIdx - 1] ?? "none"
 	};
 }
-//#endregion
-//#region src/lib/timing/types.ts
+// src/lib/timing/types.ts
 var hTotal = (t) => t.hActive + t.hFront + t.hSync + t.hBack;
 /** The vertical total as stored: for an interlaced mode, one field less its half line. */
 var vTotal = (t) => t.vActive + t.vFront + t.vSync + t.vBack;
@@ -11853,8 +11842,7 @@ function decodeDisplayId(bytes) {
 	if (payloadBytes > i - 5) ext.sectionLength = payloadBytes;
 	return ext;
 }
-//#endregion
-//#region src/lib/edid/encode.ts
+// src/lib/edid/encode.ts
 var EncodeError = class extends Error {
 	field;
 	constructor(field, message) {
@@ -12210,8 +12198,7 @@ function encodeEdid(e) {
 	}
 	return Uint8Array.from(out);
 }
-//#endregion
-//#region src/lib/edid/cta861.ts
+// src/lib/edid/cta861.ts
 /**
 * CTA-861 extension block (tag 0x02).
 *
@@ -12604,8 +12591,7 @@ function decodeCta(bytes) {
 	};
 	return ext;
 }
-//#endregion
-//#region src/lib/edid/decode.ts
+// src/lib/edid/decode.ts
 var HEADER = [
 	0,
 	255,
@@ -12891,8 +12877,7 @@ function parseEdidFile(input) {
 	for (let i = 0; i + 1 < cleaned.length; i += 2) bytes.push(parseInt(cleaned.slice(i, i + 2), 16));
 	return decodeEdid(bytes);
 }
-//#endregion
-//#region src/lib/edid/defaults.ts
+// src/lib/edid/defaults.ts
 /**
 * sRGB / Rec.709 primaries and D65 white.
 *
@@ -12983,8 +12968,7 @@ function blankEdid() {
 		extensions: []
 	};
 }
-//#endregion
-//#region src/lib/link.ts
+// src/lib/link.ts
 var DEFAULT_SIGNAL = {
 	format: "rgb444",
 	bpc: 8,
@@ -13222,8 +13206,7 @@ function dviRequirement(t, s) {
 }
 var formatBps = (bps) => bps >= 1e9 ? `${(bps / 1e9).toFixed(2)} Gbps` : `${(bps / 1e6).toFixed(0)} Mbps`;
 var formatHz = (hz) => hz >= 1e6 ? `${(hz / 1e6).toFixed(2)} MHz` : `${(hz / 1e3).toFixed(1)} kHz`;
-//#endregion
-//#region src/lib/timing/cvt.ts
+// src/lib/timing/cvt.ts
 /**
 * VESA Coordinated Video Timings.
 *
@@ -13379,8 +13362,7 @@ function cvtRb2(hActive, vActive, opts) {
 		vSyncPositive: false
 	};
 }
-//#endregion
-//#region src/lib/timing/gtf.ts
+// src/lib/timing/gtf.ts
 /**
 * VESA Generalized Timing Formula 1.1, refresh-rate variant.
 *
@@ -13431,8 +13413,7 @@ function gtf(hActive, vActive, opts) {
 		vSyncPositive: true
 	};
 }
-//#endregion
-//#region src/lib/timing/cta.ts
+// src/lib/timing/cta.ts
 var ROWS$1 = [
 	{
 		vic: 1,
@@ -14358,8 +14339,7 @@ var DMT_TIMINGS = [
 	hSyncPositive: r.hp,
 	vSyncPositive: r.vp
 }));
-//#endregion
-//#region src/lib/build.ts
+// src/lib/build.ts
 /** What simple mode opens on, and what Reset goes back to. */
 var DEFAULT_REQUEST = {
 	name: "UHD-2160p60",
@@ -14780,8 +14760,7 @@ function frlRateFor(clockHz, s) {
 	for (let i = 0; i < rates.length; i++) if (payload <= rates[i] * .8888888888888888) return i + 1;
 	return 6;
 }
-//#endregion
-//#region src/lib/primary.ts
+// src/lib/primary.ts
 /**
 * The one timing an EDID is really about.
 *
@@ -14828,8 +14807,7 @@ function setDisplayName(e, text) {
 		descriptors
 	};
 }
-//#endregion
-//#region node_modules/react/cjs/react-jsx-runtime.production.js
+// node_modules/react/cjs/react-jsx-runtime.production.js
 /**
 * @license React
 * react-jsx-runtime.production.js
@@ -14863,8 +14841,7 @@ var require_react_jsx_runtime_production = /* @__PURE__ */ __commonJSMin(((expor
 	exports.jsx = jsxProd;
 	exports.jsxs = jsxProd;
 }));
-//#endregion
-//#region src/components/ui.tsx
+// src/components/ui.tsx
 var import_jsx_runtime = (/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_react_jsx_runtime_production();
 })))();
@@ -14961,8 +14938,7 @@ function Stat({ k, v, small }) {
 		})]
 	});
 }
-//#endregion
-//#region src/components/SimpleMode.tsx
+// src/components/SimpleMode.tsx
 var PRESETS$1 = [
 	{
 		label: "1920x1080 @60",
@@ -15314,8 +15290,7 @@ function SimpleMode({ req, onChange, onBuild, notes }) {
 		}) : null
 	] });
 }
-//#endregion
-//#region src/lib/hexdump.ts
+// src/lib/hexdump.ts
 var BYTE_FORMATS = [
 	{
 		value: "xxd",
@@ -15355,8 +15330,7 @@ function renderBytes(bytes, fmt, name) {
 }
 /** The extension a saved text dump gets: a C array is a header. */
 var textExtension = (fmt) => fmt === "c" ? "h" : "txt";
-//#endregion
-//#region src/lib/zip.ts
+// src/lib/zip.ts
 /**
 * A stored (uncompressed) zip, enough to hand over a mosaic's tile files in
 * one download. EDIDs are a few hundred bytes; deflate would buy nothing and
@@ -15422,8 +15396,7 @@ function zipStored(files) {
 		...end
 	]);
 }
-//#endregion
-//#region src/lib/mosaic.ts
+// src/lib/mosaic.ts
 /**
 * Mosaic mode: one canvas split across several connectors, one EDID per plug,
 * each carrying a DisplayID Tiled Display Topology block so the source treats
@@ -15820,8 +15793,7 @@ function checkMosaic(r) {
 	});
 	return out;
 }
-//#endregion
-//#region src/components/HexView.tsx
+// src/components/HexView.tsx
 function saveBytes(bytes, filename, type = "application/octet-stream") {
 	const blob = new Blob([bytes.slice().buffer], { type });
 	const url = URL.createObjectURL(blob);
@@ -15946,8 +15918,7 @@ function HexView({ edid, raw, name, onLoad, title }) {
 		]
 	});
 }
-//#endregion
-//#region src/components/MosaicMode.tsx
+// src/components/MosaicMode.tsx
 var PRESETS = [
 	{
 		label: "6144x2160 @60 — widest for any macOS",
@@ -16254,8 +16225,7 @@ function MosaicChecks({ checks }) {
 		})]
 	});
 }
-//#endregion
-//#region src/components/AdvancedMode.tsx
+// src/components/AdvancedMode.tsx
 var DESCRIPTOR_KINDS = [
 	{
 		value: "dtd",
@@ -17543,8 +17513,7 @@ function AdvancedMode({ edid, onChange, primary }) {
 		})
 	] });
 }
-//#endregion
-//#region src/components/LinkSummary.tsx
+// src/components/LinkSummary.tsx
 /**
 * What the mode costs, and the smallest interface version that carries it.
 *
@@ -17655,8 +17624,7 @@ function LinkSummary({ timing, signal }) {
 		]
 	});
 }
-//#endregion
-//#region src/lib/capability/devices.ts
+// src/lib/capability/devices.ts
 /**
 * Per-model input capability for the processors this fleet meets.
 *
@@ -18666,8 +18634,7 @@ function resolveModes(d) {
 	} : d;
 }
 var DEVICE_LIST = DEVICES.map(resolveModes);
-//#endregion
-//#region src/lib/capability/evaluate.ts
+// src/lib/capability/evaluate.ts
 var pct = (n) => `${(n * 100).toFixed(0)}%`;
 var mhz = (hz) => `${(hz / 1e6).toFixed(1)} MHz`;
 var FORMAT_NAMES = {
@@ -18770,8 +18737,7 @@ function unsupportedReason(v) {
 function evaluateAll(t, s, devices = DEVICE_LIST) {
 	return devices.map((d) => evaluateDevice(d, t, s));
 }
-//#endregion
-//#region src/components/SupportMatrix.tsx
+// src/components/SupportMatrix.tsx
 var PILL = {
 	supported: {
 		cls: "ok",
@@ -18924,8 +18890,7 @@ function SupportMatrix({ timing, signal }) {
 		]
 	});
 }
-//#endregion
-//#region src/components/HostPanel.tsx
+// src/components/HostPanel.tsx
 /**
 * Save into the host's EDID slots — shown only when the editor is embedded.
 *
@@ -19055,8 +19020,7 @@ function targets(slots, start, count) {
 	const at = slots.findIndex((s) => s.id === start);
 	return at < 0 ? [] : slots.slice(at, at + count);
 }
-//#endregion
-//#region src/components/MosaicApply.tsx
+// src/components/MosaicApply.tsx
 /**
 * Put a mosaic straight onto the device's inputs — shown only when the host can.
 *
@@ -19202,8 +19166,7 @@ function MosaicApply({ host, mosaic, cols, rows }) {
 		}) : null]
 	});
 }
-//#endregion
-//#region src/App.tsx
+// src/App.tsx
 /**
 * The signal controls are duplicated into advanced mode deliberately.
 *
@@ -19361,9 +19324,16 @@ function App({ host } = {}) {
 		className: "app",
 		children: [
 			/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("header", {
-				className: "top",
+				className: "top sw-bar",
 				children: [
-					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("h1", { children: "EDID Editor" }),
+					/* @__PURE__ */ (0, import_jsx_runtime.jsxs)("h1", {
+						className: "sw-brand",
+						children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
+							className: "sw-mark",
+							"aria-hidden": "true",
+							children: "⌁"
+						}), " EDID Editor"]
+					}),
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 						className: "tag",
 						children: "Build an EDID from a resolution, or edit every field — then see which processors will take it."
@@ -19371,6 +19341,14 @@ function App({ host } = {}) {
 					/* @__PURE__ */ (0, import_jsx_runtime.jsx)("span", {
 						className: "ver",
 						children: "v0.1.0"
+					}),
+					host ? null : /* @__PURE__ */ (0, import_jsx_runtime.jsx)("a", {
+						className: "sw-btn",
+						href: "https://stoatworks-labs.com/web-tools/edid-editor/",
+						target: "_blank",
+						rel: "noopener",
+						"data-stoatworks-about": true,
+						children: "About"
 					})
 				]
 			}),
@@ -19545,11 +19523,11 @@ function App({ host } = {}) {
 		]
 	});
 }
-//#endregion
-//#region src/styles.css?inline
-var styles_default = ":root {\n  --bg: #12151a;\n  --panel: #1a1f27;\n  --panel-2: #212836;\n  --line: #2c3543;\n  --text: #dfe6f0;\n  --dim: #8b98ab;\n  --accent: #5fb0d8;\n  --ok: #4ec98a;\n  --warn: #e0b050;\n  --bad: #e0685f;\n  --unknown: #6b7787;\n  --mono: ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, monospace;\n}\n\n* { box-sizing: border-box; }\n\nbody {\n  margin: 0;\n  background: var(--bg);\n  color: var(--text);\n  font: 14px/1.5 system-ui, -apple-system, \"Segoe UI\", sans-serif;\n}\n\n.app { max-width: 1680px; margin: 0 auto; padding: 16px 20px 64px; }\n\nheader.top {\n  display: flex; align-items: baseline; gap: 16px;\n  padding-bottom: 12px; margin-bottom: 16px;\n  border-bottom: 1px solid var(--line);\n  flex-wrap: wrap;\n}\nheader.top h1 { font-size: 19px; margin: 0; font-weight: 620; letter-spacing: -0.01em; }\nheader.top .tag { color: var(--dim); font-size: 13px; }\nheader.top .ver { margin-left: auto; color: var(--dim); font-size: 12px; font-family: var(--mono); }\n\n.tabs { display: flex; gap: 4px; margin-bottom: 16px; }\n.tabs button {\n  background: var(--panel); color: var(--dim); border: 1px solid var(--line);\n  padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 550;\n}\n.tabs button[aria-selected='true'] { background: var(--accent); border-color: var(--accent); color: #0d1117; }\n\n.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }\n@media (max-width: 1100px) { .cols { grid-template-columns: 1fr; } }\n\n.panel {\n  background: var(--panel); border: 1px solid var(--line);\n  border-radius: 8px; padding: 14px 16px; margin-bottom: 14px;\n}\n.panel > h2 {\n  font-size: 12px; text-transform: uppercase; letter-spacing: 0.07em;\n  color: var(--dim); margin: 0 0 12px; font-weight: 620;\n}\n.panel > h3 {\n  font-size: 12px; letter-spacing: 0.04em; color: var(--dim);\n  margin: 16px 0 8px; font-weight: 600;\n}\n\n.grid { display: grid; gap: 10px 14px; }\n.grid.c2 { grid-template-columns: 1fr 1fr; }\n.grid.c3 { grid-template-columns: 1fr 1fr 1fr; }\n.grid.c4 { grid-template-columns: repeat(4, 1fr); }\n@media (max-width: 620px) { .grid.c3, .grid.c4 { grid-template-columns: 1fr 1fr; } }\n\nlabel.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }\nlabel.field > span { font-size: 11px; color: var(--dim); letter-spacing: 0.03em; }\nlabel.field .hint { color: var(--unknown); font-size: 10.5px; }\n\ninput[type='text'], input[type='number'], select, textarea {\n  background: var(--bg); color: var(--text);\n  border: 1px solid var(--line); border-radius: 5px;\n  padding: 6px 8px; font-size: 13px; font-family: inherit; width: 100%; min-width: 0;\n}\ninput[type='number'] { font-family: var(--mono); }\ntextarea { font-family: var(--mono); font-size: 11.5px; line-height: 1.45; resize: vertical; }\ninput:focus, select:focus, textarea:focus { outline: 1px solid var(--accent); border-color: var(--accent); }\n\nlabel.check { display: flex; align-items: center; gap: 7px; font-size: 12.5px; cursor: pointer; }\nlabel.check input { accent-color: var(--accent); }\n\nbutton.go {\n  background: var(--accent); color: #0d1117; border: 0; border-radius: 6px;\n  padding: 9px 20px; font-size: 13.5px; font-weight: 650; cursor: pointer;\n}\nbutton.go:hover { filter: brightness(1.08); }\nbutton.minor {\n  background: var(--panel-2); color: var(--text); border: 1px solid var(--line);\n  border-radius: 5px; padding: 5px 11px; font-size: 12px; cursor: pointer;\n}\nbutton.minor:hover { border-color: var(--accent); }\n.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }\n\ntable.matrix { width: 100%; border-collapse: collapse; font-size: 12.5px; }\ntable.matrix th {\n  text-align: left; color: var(--dim); font-weight: 600; font-size: 11px;\n  text-transform: uppercase; letter-spacing: 0.05em;\n  padding: 6px 8px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel);\n}\ntable.matrix td { padding: 7px 8px; border-bottom: 1px solid #232a35; vertical-align: top; }\ntable.matrix tr:hover td { background: #1e2530; }\ntable.matrix .model { font-weight: 560; }\ntable.matrix .vendor { color: var(--dim); font-size: 11px; }\n\n.pill {\n  display: inline-block; padding: 1.5px 8px; border-radius: 999px;\n  font-size: 11px; font-weight: 620; white-space: nowrap;\n}\n.pill.ok { background: rgba(78,201,138,0.15); color: var(--ok); }\n.pill.warn { background: rgba(224,176,80,0.15); color: var(--warn); }\n.pill.bad { background: rgba(224,104,95,0.15); color: var(--bad); }\n.pill.unknown { background: rgba(107,119,135,0.18); color: var(--unknown); }\n.pill.conf { background: transparent; border: 1px solid var(--line); color: var(--dim); font-weight: 500; }\n\n.note { color: var(--dim); font-size: 11.5px; margin-top: 4px; }\n.note.warn { color: var(--warn); }\n.note.bad { color: var(--bad); }\n\n.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }\n.stat { background: var(--panel-2); border-radius: 6px; padding: 8px 10px; }\n.stat .k { font-size: 10.5px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em; }\n.stat .v { font-size: 15px; font-family: var(--mono); margin-top: 2px; }\n.stat .v.small { font-size: 12.5px; }\n\npre.hex {\n  font-family: var(--mono); font-size: 11.5px; line-height: 1.55;\n  background: var(--bg); border: 1px solid var(--line); border-radius: 6px;\n  padding: 10px 12px; overflow-x: auto; margin: 0;\n}\npre.hex .addr { color: var(--unknown); }\npre.hex .sep { color: #3d4a5c; }\n\n.banner {\n  border-left: 3px solid var(--warn); background: rgba(224,176,80,0.07);\n  padding: 8px 12px; border-radius: 0 5px 5px 0; font-size: 12.5px; margin-bottom: 10px;\n}\n.banner.bad { border-color: var(--bad); background: rgba(224,104,95,0.07); }\n.banner.info { border-color: var(--accent); background: rgba(95,176,216,0.07); }\n\ndetails.cite { margin-top: 6px; }\ndetails.cite summary { cursor: pointer; color: var(--dim); font-size: 11px; }\ndetails.cite blockquote {\n  margin: 6px 0 0; padding-left: 10px; border-left: 2px solid var(--line);\n  color: var(--dim); font-size: 11.5px;\n}\ndetails.cite blockquote cite { display: block; color: var(--unknown); font-style: normal; margin-top: 3px; font-size: 10.5px; }\n\n.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }\n.filters button {\n  background: var(--panel-2); border: 1px solid var(--line); color: var(--dim);\n  border-radius: 999px; padding: 3px 11px; font-size: 11.5px; cursor: pointer;\n}\n.filters button[aria-pressed='true'] { border-color: var(--accent); color: var(--text); }\n\n.scroll { max-height: 620px; overflow-y: auto; }\n\n/*\n * The shared Stoatworks support footer appends itself to <body>, outside .app,\n * so it does not inherit the page gutter. Match it, and let the footer draw its\n * own rule and chips from currentColor as it is designed to.\n */\n.sw-support {\n  max-width: 1680px;\n  margin-left: auto;\n  margin-right: auto;\n}\n\n/* Mosaic: one row per plug, the selected one drives the byte view. */\ntable.tiles { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 6px; }\ntable.tiles th { text-align: left; color: var(--dim); font-weight: 500; font-size: 11px; padding: 4px 8px; border-bottom: 1px solid var(--line); }\ntable.tiles td { padding: 6px 8px; border-bottom: 1px solid #232a35; cursor: pointer; }\ntable.tiles tr:hover td { background: #1e2530; }\ntable.tiles tr[aria-selected='true'] td { background: rgba(95,176,216,0.10); }\n.mono { font-family: var(--mono); }\n";
-//#endregion
-//#region src/embed.tsx
+// src/stoatworks-theme.css?inline
+var stoatworks_theme_default = "/*\n * Stoatworks web-tool theme: the look mymac shipped with, shared by every hosted\n * browser tool. Vendored from stoatworks-backend/theme by scripts/sync-theme.sh:\n * edit it there and re-sync, never inside a tool repo.\n *\n * Everything sits in the `sw-theme` cascade layer, and any style that isn't in a\n * layer beats any style that is, whatever the specificity. So a tool's own\n * stylesheet always wins over this file, and this file only fills in what a\n * tool leaves unsaid. Load it first all the same (import it before the tool's\n * own CSS, or link it above it).\n *\n * How a tool uses it:\n *   - Point the tool's own variables at these tokens in its :root, e.g.\n *     `--bg: var(--sw-paper); --panel: var(--sw-card);`, and drop the tool's own\n *     hex values and any `color-scheme: dark`. The tool then follows the Mac's\n *     light/dark setting, as mymac does.\n *   - Put the tool's header on the navy bar: class `sw-bar` on the header, a\n *     `sw-brand` name with a `sw-mark` tile in front of it, and the About button\n *     inside the bar (the bar styles its buttons as outlined light ones).\n *   - Canvases, video, test patterns and 3D viewports sit on `--sw-stage`, which\n *     stays dark in both modes, with `--sw-stage-ink` for anything drawn on top.\n *\n * Token names avoid `--sw-rule` and `--sw-chip`, which support-footer.js scopes\n * to its own footer.\n */\n\n@layer sw-theme {\n  :root {\n    /* Brand navy band: stays navy in both modes. */\n    --sw-navy: #0e2942;\n    --sw-navy-ink: #eaf2fa;\n    --sw-navy-ink-2: #c9d8e6;\n    --sw-navy-line: rgba(255, 255, 255, 0.28);\n    --sw-navy-tint: rgba(255, 255, 255, 0.06);\n    --sw-navy-tint-line: rgba(255, 255, 255, 0.12);\n    --sw-accent-soft: #7fa8ce;\n\n    /* Surfaces and text. */\n    --sw-paper: #fafaf8;\n    --sw-card: #ffffff;\n    --sw-tint: #eef3f8;\n    --sw-ink: #16212c;\n    --sw-muted: #5a6875;\n    --sw-faint: #6f7d8a;\n    --sw-line: #dde3e9;\n\n    /* Accent (RAL 5019 Capri blue in light mode) and the text that sits on it. */\n    --sw-accent: #235f92;\n    --sw-on-accent: #fafaf8;\n\n    /* States. */\n    --sw-ok: #2f6b4f;\n    --sw-warn: #8a6a1f;\n    --sw-bad: #a3362d;\n\n    /* Commands and code blocks: navy in light mode, near-black in dark. */\n    --sw-code-bg: #0e2942;\n    --sw-code-ink: #eaf2fa;\n    --sw-code-line: rgba(127, 168, 206, 0.35);\n\n    /* Output surfaces (canvas, video, patterns, 3D): dark in both modes. */\n    --sw-stage: #060e16;\n    --sw-stage-ink: #e6edf3;\n    --sw-stage-line: #233546;\n\n    --sw-radius: 10px;\n    --sw-radius-sm: 8px;\n    --sw-font: -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif;\n    --sw-mono: ui-monospace, \"SF Mono\", Menlo, Consolas, monospace;\n\n    /* Link colour in support-footer.js. */\n    --sw-support-accent: var(--sw-accent);\n\n    color-scheme: light;\n  }\n\n  @media (prefers-color-scheme: dark) {\n    :root:not([data-theme=\"light\"]) {\n      --sw-paper: #0b1621;\n      --sw-card: #12212f;\n      --sw-tint: #1a2e40;\n      --sw-ink: #e6edf3;\n      --sw-muted: #9fb0bf;\n      --sw-faint: #74879a;\n      --sw-line: #233546;\n      --sw-accent: #6c9fd0;\n      --sw-on-accent: #0b1621;\n      --sw-ok: #6fb592;\n      --sw-warn: #d1ad5a;\n      --sw-bad: #e07a70;\n      --sw-code-bg: #060e16;\n      color-scheme: dark;\n    }\n  }\n  :root[data-theme=\"dark\"] {\n    --sw-paper: #0b1621;\n    --sw-card: #12212f;\n    --sw-tint: #1a2e40;\n    --sw-ink: #e6edf3;\n    --sw-muted: #9fb0bf;\n    --sw-faint: #74879a;\n    --sw-line: #233546;\n    --sw-accent: #6c9fd0;\n    --sw-on-accent: #0b1621;\n    --sw-ok: #6fb592;\n    --sw-warn: #d1ad5a;\n    --sw-bad: #e07a70;\n    --sw-code-bg: #060e16;\n    color-scheme: dark;\n  }\n\n  /* ── Base elements ─────────────────────────────────────────────────────────── */\n  /* No box-sizing, font-size or line-height here: each tool keeps its own\n     density and layout maths, and this file must not move a tool's layout. */\n  html { -webkit-text-size-adjust: 100%; }\n  body {\n    margin: 0;\n    background: var(--sw-paper);\n    color: var(--sw-ink);\n    font-family: var(--sw-font);\n  }\n  a { color: var(--sw-accent); }\n  code, kbd, samp, pre { font-family: var(--sw-mono); }\n  code { font-size: 0.92em; }\n\n  button {\n    font: inherit;\n    font-size: 0.9rem;\n    border: 1px solid var(--sw-line);\n    background: var(--sw-card);\n    color: var(--sw-ink);\n    border-radius: var(--sw-radius-sm);\n    padding: 6px 12px;\n    cursor: pointer;\n  }\n  button:hover { border-color: var(--sw-accent); }\n  button:disabled { opacity: 0.5; cursor: default; }\n  button:disabled:hover { border-color: var(--sw-line); }\n\n  input:not([type=\"checkbox\"], [type=\"radio\"], [type=\"range\"], [type=\"color\"], [type=\"file\"]),\n  select,\n  textarea {\n    font: inherit;\n    font-size: 0.9rem;\n    padding: 5px 8px;\n    border-radius: var(--sw-radius-sm);\n    border: 1px solid var(--sw-line);\n    background: var(--sw-card);\n    color: var(--sw-ink);\n  }\n  input[type=\"checkbox\"], input[type=\"radio\"], input[type=\"range\"], progress { accent-color: var(--sw-accent); }\n\n  :focus-visible { outline: 2px solid var(--sw-accent); outline-offset: 2px; }\n\n  dialog {\n    border: 1px solid var(--sw-line);\n    border-radius: var(--sw-radius);\n    background: var(--sw-card);\n    color: var(--sw-ink);\n  }\n  dialog::backdrop { background: rgba(6, 14, 22, 0.6); }\n\n  /* ── The navy bar (a tool's header) ────────────────────────────────────────── */\n  .sw-bar {\n    background: var(--sw-navy);\n    color: var(--sw-navy-ink);\n    display: flex;\n    align-items: center;\n    gap: 12px;\n    flex-wrap: wrap;\n    padding: 10px 16px;\n  }\n  .sw-brand {\n    display: inline-flex;\n    align-items: center;\n    gap: 0.45em;\n    margin: 0;\n    font-weight: 700;\n    letter-spacing: 0.02em;\n    font-size: 1.05rem;\n    line-height: 1.2;\n    white-space: nowrap;\n    color: inherit;\n    text-decoration: none;\n  }\n  .sw-mark {\n    display: inline-grid;\n    place-items: center;\n    flex: none;\n    width: 1.6em;\n    height: 1.6em;\n    background: var(--sw-accent-soft);\n    color: var(--sw-navy);\n    border-radius: 6px;\n    font-weight: 700;\n    line-height: 1;\n  }\n  .sw-mark svg, .sw-mark img { width: 70%; height: 70%; display: block; }\n  .sw-sub { color: var(--sw-navy-ink-2); font-size: 0.9rem; margin: 0; }\n  .sw-bar a { color: var(--sw-accent-soft); }\n  .sw-bar button, .sw-bar .sw-btn {\n    background: transparent;\n    color: var(--sw-navy-ink);\n    border: 1px solid var(--sw-navy-line);\n    border-radius: var(--sw-radius-sm);\n    padding: 4px 12px;\n  }\n  .sw-bar button:hover, .sw-bar .sw-btn:hover { border-color: var(--sw-accent-soft); }\n  .sw-bar button.sw-primary, .sw-bar .sw-btn.sw-primary {\n    background: var(--sw-accent-soft);\n    border-color: var(--sw-accent-soft);\n    color: var(--sw-navy);\n    font-weight: 600;\n  }\n  .sw-bar :focus-visible { outline-color: var(--sw-accent-soft); }\n\n  /* ── Components ────────────────────────────────────────────────────────────── */\n  .sw-card {\n    background: var(--sw-card);\n    border: 1px solid var(--sw-line);\n    border-radius: var(--sw-radius);\n  }\n  .sw-tinted {\n    background: var(--sw-tint);\n    border-radius: var(--sw-radius-sm);\n  }\n  .sw-muted { color: var(--sw-muted); }\n\n  button.sw-primary, .sw-btn.sw-primary {\n    background: var(--sw-accent);\n    border-color: var(--sw-accent);\n    color: var(--sw-on-accent);\n    font-weight: 600;\n  }\n  button.sw-primary:hover, .sw-btn.sw-primary:hover { filter: brightness(1.08); }\n  button.sw-primary:disabled { filter: none; }\n  button.sw-quiet { background: transparent; }\n\n  /* Segmented control: <div class=\"sw-seg\"><label><input type=\"radio\"><span>…</span></label>…</div> */\n  .sw-seg {\n    display: inline-flex;\n    border: 1px solid var(--sw-line);\n    border-radius: var(--sw-radius-sm);\n    overflow: hidden;\n  }\n  .sw-seg label { position: relative; }\n  .sw-seg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }\n  .sw-seg span { display: block; padding: 5px 11px; font-size: 0.86rem; color: var(--sw-muted); }\n  .sw-seg label + label span { border-left: 1px solid var(--sw-line); }\n  .sw-seg input:checked + span { background: var(--sw-accent); color: var(--sw-on-accent); }\n  .sw-seg input:focus-visible + span { outline: 2px solid var(--sw-accent); outline-offset: -2px; }\n\n  /* A command with a copy button: <div class=\"sw-cmd\"><code>…</code><button>Copy</button></div> */\n  .sw-cmd {\n    display: flex;\n    align-items: stretch;\n    background: var(--sw-code-bg);\n    color: var(--sw-code-ink);\n    border: 1px solid var(--sw-code-line);\n    border-radius: var(--sw-radius-sm);\n    overflow: hidden;\n  }\n  .sw-cmd code {\n    flex: 1;\n    min-width: 0;\n    padding: 8px 10px;\n    overflow-wrap: anywhere;\n    font-size: 0.85rem;\n    line-height: 1.45;\n  }\n  .sw-cmd button {\n    flex: none;\n    border: 0;\n    border-left: 1px solid var(--sw-code-line);\n    border-radius: 0;\n    background: transparent;\n    color: var(--sw-code-ink);\n    padding: 0 12px;\n  }\n  .sw-cmd button:hover { background: rgba(127, 168, 206, 0.18); }\n\n  .sw-stage { background: var(--sw-stage); color: var(--sw-stage-ink); }\n}\n";
+// src/styles.css?inline
+var styles_default = "/* Colours come from the shared Stoatworks theme (stoatworks-theme.css, loaded first),\n   so the editor follows the system's light or dark setting like every fleet tool. */\n:root {\n  --bg: var(--sw-paper);\n  --panel: var(--sw-card);\n  --panel-2: var(--sw-tint);\n  --line: var(--sw-line);\n  --text: var(--sw-ink);\n  --dim: var(--sw-muted);\n  --accent: var(--sw-accent);\n  --ok: var(--sw-ok);\n  --warn: var(--sw-warn);\n  --bad: var(--sw-bad);\n  --unknown: var(--sw-faint);\n  --mono: var(--sw-mono);\n  /* A softer rule between table rows than between panels. */\n  --line-soft: color-mix(in srgb, var(--sw-line) 70%, transparent);\n  --row-hover: color-mix(in srgb, var(--sw-ink) 4%, transparent);\n}\n\n* { box-sizing: border-box; }\n\nbody {\n  margin: 0;\n  background: var(--bg);\n  color: var(--text);\n  font: 14px/1.5 var(--sw-font);\n}\n\n.app { max-width: 1680px; margin: 0 auto; padding: 0 20px 64px; }\n\n/* The navy bar runs the full width of the window while its contents stay on the\n   page's column: border-image paints past the box without widening the page. */\nheader.top {\n  gap: 16px;\n  padding: 10px 0; margin-bottom: 16px;\n  border-image: linear-gradient(var(--sw-navy), var(--sw-navy)) fill 0 / 0 / 0 100vmax;\n}\nheader.top .tag { color: var(--sw-navy-ink-2); font-size: 13px; }\nheader.top .ver { margin-left: auto; color: var(--sw-navy-ink-2); font-size: 12px; font-family: var(--mono); }\nheader.top .sw-btn { text-decoration: none; font-size: 0.9rem; line-height: 1.25; }\n\n/* Simple / Advanced / Mosaic: a segmented control, the selected mode filled with the accent. */\n.tabs {\n  display: flex; width: max-content; margin-bottom: 16px;\n  border: 1px solid var(--line); border-radius: var(--sw-radius-sm); overflow: hidden;\n}\n.tabs button {\n  background: var(--panel); color: var(--dim); border: 0; border-radius: 0;\n  padding: 7px 16px; cursor: pointer; font-size: 13px; font-weight: 550;\n}\n.tabs button + button { border-left: 1px solid var(--line); }\n.tabs button:hover { color: var(--text); }\n.tabs button[aria-selected='true'] { background: var(--accent); color: var(--sw-on-accent); }\n\n.cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }\n@media (max-width: 1100px) { .cols { grid-template-columns: 1fr; } }\n\n.panel {\n  background: var(--panel); border: 1px solid var(--line);\n  border-radius: var(--sw-radius); padding: 14px 16px; margin-bottom: 14px;\n}\n.panel > h2 {\n  font-size: 15px; color: var(--text); margin: 0 0 12px; font-weight: 650;\n}\n.panel > h3 {\n  font-size: 12px; letter-spacing: 0.04em; color: var(--dim);\n  margin: 16px 0 8px; font-weight: 600;\n}\n\n.grid { display: grid; gap: 10px 14px; }\n.grid.c2 { grid-template-columns: 1fr 1fr; }\n.grid.c3 { grid-template-columns: 1fr 1fr 1fr; }\n.grid.c4 { grid-template-columns: repeat(4, 1fr); }\n@media (max-width: 620px) { .grid.c3, .grid.c4 { grid-template-columns: 1fr 1fr; } }\n\nlabel.field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }\nlabel.field > span { font-size: 11px; color: var(--dim); letter-spacing: 0.03em; }\nlabel.field .hint { color: var(--unknown); font-size: 10.5px; }\n\ninput[type='text'], input[type='number'], select, textarea {\n  background: var(--panel); color: var(--text);\n  border: 1px solid var(--line); border-radius: var(--sw-radius-sm);\n  padding: 6px 8px; font-size: 13px; font-family: inherit; width: 100%; min-width: 0;\n}\ninput[type='number'] { font-family: var(--mono); }\ntextarea { font-family: var(--mono); font-size: 11.5px; line-height: 1.45; resize: vertical; }\ninput:focus, select:focus, textarea:focus { outline: 1px solid var(--accent); border-color: var(--accent); }\n\nlabel.check { display: flex; align-items: center; gap: 7px; font-size: 12.5px; cursor: pointer; }\nlabel.check input { accent-color: var(--accent); }\n\nbutton.go {\n  background: var(--accent); color: var(--sw-on-accent); border: 1px solid var(--accent); border-radius: var(--sw-radius-sm);\n  padding: 9px 20px; font-size: 13.5px; font-weight: 600; cursor: pointer;\n}\nbutton.go:hover { filter: brightness(1.08); }\nbutton.minor {\n  background: var(--panel); color: var(--text); border: 1px solid var(--line);\n  border-radius: var(--sw-radius-sm); padding: 5px 11px; font-size: 12px; cursor: pointer;\n}\nbutton.minor:hover { border-color: var(--accent); }\n.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }\n\ntable.matrix { width: 100%; border-collapse: collapse; font-size: 12.5px; }\ntable.matrix th {\n  text-align: left; color: var(--dim); font-weight: 600; font-size: 11px;\n  text-transform: uppercase; letter-spacing: 0.05em;\n  padding: 6px 8px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel);\n}\ntable.matrix td { padding: 7px 8px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }\ntable.matrix tr:hover td { background: var(--row-hover); }\ntable.matrix .model { font-weight: 560; }\ntable.matrix .vendor { color: var(--dim); font-size: 11px; }\n\n.pill {\n  display: inline-block; padding: 1.5px 8px; border-radius: 999px;\n  font-size: 11px; font-weight: 620; white-space: nowrap;\n}\n.pill.ok { background: color-mix(in srgb, var(--ok) 15%, transparent); color: var(--ok); }\n.pill.warn { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); }\n.pill.bad { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }\n.pill.unknown { background: color-mix(in srgb, var(--unknown) 18%, transparent); color: var(--unknown); }\n.pill.conf { background: transparent; border: 1px solid var(--line); color: var(--dim); font-weight: 500; }\n\n.note { color: var(--dim); font-size: 11.5px; margin-top: 4px; }\n.note.warn { color: var(--warn); }\n.note.bad { color: var(--bad); }\n\n.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; }\n.stat { background: var(--panel-2); border-radius: var(--sw-radius-sm); padding: 8px 10px; }\n.stat .k { font-size: 10.5px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em; }\n.stat .v { font-size: 15px; font-family: var(--mono); margin-top: 2px; }\n.stat .v.small { font-size: 12.5px; }\n\npre.hex {\n  font-family: var(--mono); font-size: 11.5px; line-height: 1.55;\n  background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--sw-radius-sm);\n  padding: 10px 12px; overflow-x: auto; margin: 0;\n}\npre.hex .addr { color: var(--unknown); }\npre.hex .sep { color: color-mix(in srgb, var(--unknown) 55%, transparent); }\n\n.banner {\n  border-left: 3px solid var(--warn); background: color-mix(in srgb, var(--warn) 8%, transparent);\n  padding: 8px 12px; border-radius: 0 var(--sw-radius-sm) var(--sw-radius-sm) 0; font-size: 12.5px; margin-bottom: 10px;\n}\n.banner.bad { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 8%, transparent); }\n.banner.info { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); }\n\ndetails.cite { margin-top: 6px; }\ndetails.cite summary { cursor: pointer; color: var(--dim); font-size: 11px; }\ndetails.cite blockquote {\n  margin: 6px 0 0; padding-left: 10px; border-left: 2px solid var(--line);\n  color: var(--dim); font-size: 11.5px;\n}\ndetails.cite blockquote cite { display: block; color: var(--unknown); font-style: normal; margin-top: 3px; font-size: 10.5px; }\n\n.filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }\n.filters button {\n  background: var(--panel-2); border: 1px solid var(--line); color: var(--dim);\n  border-radius: 999px; padding: 3px 11px; font-size: 11.5px; cursor: pointer;\n}\n.filters button:hover { border-color: var(--accent); }\n.filters button[aria-pressed='true'] {\n  border-color: var(--accent); color: var(--text);\n  background: color-mix(in srgb, var(--accent) 12%, var(--panel));\n}\n\n.scroll { max-height: 620px; overflow-y: auto; }\n\n/*\n * The shared Stoatworks support footer appends itself to <body>, outside .app,\n * so it does not inherit the page gutter. Match it, and let the footer draw its\n * own rule and chips from currentColor as it is designed to.\n */\n.sw-support {\n  max-width: 1680px;\n  margin-left: auto;\n  margin-right: auto;\n}\n\n/* Mosaic: one row per plug, the selected one drives the byte view. */\ntable.tiles { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 6px; }\ntable.tiles th { text-align: left; color: var(--dim); font-weight: 500; font-size: 11px; padding: 4px 8px; border-bottom: 1px solid var(--line); }\ntable.tiles td { padding: 6px 8px; border-bottom: 1px solid var(--line-soft); cursor: pointer; }\ntable.tiles tr:hover td { background: var(--row-hover); }\ntable.tiles tr[aria-selected='true'] td { background: color-mix(in srgb, var(--accent) 10%, transparent); }\n.mono { font-family: var(--mono); }\n";
+// src/embed.tsx
 /**
 * The editor as a module another application embeds.
 *
@@ -19577,7 +19555,7 @@ function mount(el, host) {
 	if (!doc.getElementById(STYLE_ID)) {
 		const style = doc.createElement("style");
 		style.id = STYLE_ID;
-		style.textContent = styles_default;
+		style.textContent = `${stoatworks_theme_default}\n${styles_default}`;
 		doc.head.append(style);
 	}
 	const root = (0, import_client.createRoot)(el);
@@ -19635,5 +19613,4 @@ function describeEdid(bytes) {
 		errors: r.issues.filter((i) => i.severity === "error").map((i) => `${i.where}: ${i.message}`)
 	};
 }
-//#endregion
 export { describeEdid, edidForTiming, mount, timingLabel, version };

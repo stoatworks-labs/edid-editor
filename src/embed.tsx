@@ -21,6 +21,8 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+// Vendored from stoatworks-backend/theme by scripts/sync-theme.sh; injected ahead of styles.css so it layers over it.
+import themeCss from './stoatworks-theme.css?inline'
 import css from './styles.css?inline'
 import type { EdidHost } from './host.ts'
 import type { Timing } from './lib/timing/types.ts'
@@ -44,7 +46,7 @@ export function mount(el: HTMLElement, host?: EdidHost): () => void {
   if (!doc.getElementById(STYLE_ID)) {
     const style = doc.createElement('style')
     style.id = STYLE_ID
-    style.textContent = css
+    style.textContent = `${themeCss}\n${css}`
     doc.head.append(style)
   }
   const root = createRoot(el)
