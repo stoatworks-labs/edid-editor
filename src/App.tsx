@@ -132,12 +132,12 @@ export default function App({ host }: { host?: EdidHost } = {}) {
           Build an EDID from a resolution, or edit every field — then see which processors will take it.
         </span>
         <span className="ver">{__APP_VERSION__}</span>
-        {/* Not inside a host's window: there it is part of somebody else's app. The page carries no
-            about.js yet, so the link goes to the tool's page; once about.js is synced in, it opens the dialog. */}
+        {/* Not inside a host's window: there it is part of somebody else's app. Opens the shared
+            About dialog — see public/about.js, which delegates this attribute from the document. */}
         {host ? null : (
-          <a className="sw-btn" href="https://stoatworks-labs.com/web-tools/edid-editor/" target="_blank" rel="noopener" data-stoatworks-about>
+          <button type="button" data-stoatworks-about>
             About
-          </a>
+          </button>
         )}
       </header>
 
